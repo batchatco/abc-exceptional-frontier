@@ -1,0 +1,847 @@
+\documentclass[11pt,a4paper]{amsart}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\DeclareMathOperator{\rad}{rad}
+\DeclareMathOperator{\lcm}{lcm}
+\DeclareMathOperator{\rank}{rank}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\PP}{\mathbb{P}}
+\newcommand{\AAff}{\mathbb{A}}
+\newcommand{\eps}{\varepsilon}
+
+\title[A Two-Tier Frontier for the $abc$ Exceptional Set]{A Two-Tier Frontier for the Exceptional Set in the $abc$ Conjecture via Curve Lifting and Large-Coefficient Diagonal Surfaces}
+
+\author{Bradley Arthur Taylor}
+\date{November 2026}
+
+\begin{document}
+
+\begin{abstract}
+Let $N_\lambda(X)$ count coprime positive integer triples $a+b=c \le X$ with $\rad(abc) < c^\lambda$, and let $N_{\mathrm{rel}}(\alpha,\lambda;X)$ impose the additional imbalance constraint $a \le c^\alpha$ ($0 \le \alpha \le 1$). Working directly at fixed cutoff $d_0 = 6$ with exact dyadic tail pinning, we establish a sharp \emph{two-tier} frontier of unconditional upper bounds across the two-parameter $(\alpha,\lambda)$ plane, certified with zero floating-point arithmetic by exact rational dual/Farkas proof trees checked by an independent Python~3 standard-library verifier:
+\begin{enumerate}[label=(\arabic*),itemsep=1pt,topsep=2pt]
+\item \emph{Tier~1 (Purely elementary—zero Bombieri--Pila, zero Salberger):} Combining asymmetric Fourier $L^4$--$L^4$--$L^2$ bounds (\textsf{L442}), single-block elementary Hua moments (\textsf{Hua}), self-thinning congruence and difference lattices (\textsf{stCL}, \textsf{diffCL}), prime-indexed and cofactor-divisor collisions (\textsf{coll}$_p$, \textsf{qcoll}, \textsf{st-qcoll}), $1$-, $2$-, and $3$-block modular collisions on $(\Z/Q\Z)^\times$ (\textsf{modcoll}, \textsf{modcoll}$_3$), and elementary Minkowski--B\'ezout counting (\textsf{cop\_elem}), we prove uniformly for all $0 < \lambda \le 1$ that $N_\lambda(X) \ll_\eps X^{9/16 + \eps}$ ($9/16 = 0.5625$), together with
+\begin{gather*}
+  N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_\eps X^{1/2+\eps} \quad (0 \le \alpha \le 97/206 \approx 0.47087), \\
+  N_{\mathrm{rel}}(1/2,\lambda;X) \ll_\eps X^{263/522+\eps} \quad (263/522 \approx 0.50383),
+\end{gather*}
+and—unexpectedly—already attain the exact Tier~2 optimum at every tested $\alpha \le 4/5$ (reaching $686/1255 \approx 0.54661$ purely elementarily) and every tested sub-critical point $\lambda < 1$ (e.g., $7/15$ at $\lambda = 4/5$, $119/235$ at $\lambda = 9/10$, and $1759/4250 \approx 0.41388$ at $(\alpha,\lambda) = (1/2, 4/5)$).
+\item \emph{Tier~2 (Full frontier—1D Salberger curve lifting and 2D large-coefficient diagonal surfaces):} Adjoining two new determinant-method disjunctions—single-modulus Coppersmith curve lifting via a Jonqui\`eres $\Q$-automorphism paired with Salberger's plane-curve estimate~\cite[Theorem~1.2]{Salberger2023} (\textsf{cbp1}), and a Brill--Gordan / Cauchy--Binet large-coefficient upgrade of Salberger's diagonal-surface fourth-moment estimate~\cite[Theorem~3.16 and Corollary~6.5]{Salberger2023} feeding directly into the empirical $L^4$ saving $F_n$ (\textsf{salb\_f}, $d \in \{4,5,6\}$)—we strictly improve the near-symmetric regime $\alpha > 4/5$ ($\lambda = 1$), obtaining $84209/152740 \approx 0.55132$ at $\alpha = 9/10$ and establishing, uniformly for all $0 < \lambda \le 1$,
+\[
+  N_\lambda(X) \ll_\eps X^{4224/7637 + \eps} \qquad (4224/7637 = 0.553096\ldots).
+\]
+\end{enumerate}
+Finally, we exhibit the exact zero-tail primal extremizer $a_1 a_5^5 + b_1 b_4^4 = c_1 c_3^3 c_4^4$ attaining $4224/7637$ and show why overcoming its $B^1$ pointwise floor requires an averaged bilinear fourth-moment estimate.
+\end{abstract}
+
+\maketitle
+
+\section{Introduction and main results}\label{sec:intro}
+
+The $abc$ conjecture of Masser~\cite{Masser1985} and Oesterl\'e~\cite{Oesterle1988} asserts that for every $\lambda < 1$, there are only finitely many triples $(a,b,c) \in \Z_{>0}^3$ with $a+b=c$, $\gcd(a,b,c)=1$, and $\rad(abc) < c^\lambda$, where $\rad(n) = \prod_{p \mid n} p$ denotes the squarefree kernel of $n$. Unconditional pointwise lower bounds on $\rad(abc)$ remain subexponential~\cite{StewartYu2001}, even in imbalanced regimes $a \le c^{1-\eta}$~\cite{Pasten2024}.
+
+A complementary quantitative problem bounds the \emph{exceptional set}
+\begin{equation}\label{eq:Nlam}
+  N_\lambda(X) := \#\bigl\{(a,b,c) \in \Z_{>0}^3 : a+b=c,\; \gcd(a,b,c)=1,\; c \le X,\; \rad(abc) < c^\lambda\bigr\},
+\end{equation}
+and the two-parameter \emph{imbalanced exceptional set} ($0 \le \alpha \le 1$, $0 < \lambda \le 1$)
+\begin{equation}\label{eq:Nrel}
+  N_{\mathrm{rel}}(\alpha,\lambda;X) := \#\Bigl\{(a,b,c) \in \Z_{>0}^3 :
+  \begin{aligned}
+    &a+b=c,\; \gcd(a,b,c)=1, \\
+    &a < b,\; a \le c^\alpha,\; c \le X,\; \rad(abc) < c^\lambda
+  \end{aligned}
+  \Bigr\}.
+\end{equation}
+(For $0 < \lambda \le 1$, the diagonal triple $1+1=2$ has $\rad(2) = 2 \ge 2^\lambda$, so $N_{\mathrm{rel}}(1,\lambda;X) = \frac{1}{2} N_\lambda(X)$ identically.) By de~Bruijn's radical-counting estimate~\cite{deBruijn1962} (see also~\cite{Lichtman2025}),
+\[
+  N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_\eps X^{\delta_{\mathrm{dB}}(\alpha,\lambda)+\eps}, \qquad
+  \delta_{\mathrm{dB}}(\alpha,\lambda) = \min\!\left(\frac{2\lambda}{3},\; \frac{\lambda+\alpha}{2}\right),
+\]
+giving the classical benchmark $N_\lambda(X) \ll_\eps X^{2/3+\eps}$.
+
+Browning, Lichtman, and Ter\"av\"ainen—later joined by Bernert~\cite{BLTv1_2024,BLT2026,Bernert2025,Li2025}—broke the $2/3$ barrier via prime-multiplicity anatomy, Fourier moments, geometry of numbers, and (in~\cite{BLTv1_2024}) Diophantine curve bounds, proving in~\cite[Theorems~1.2 and~1.3]{BLT2026} that
+\[
+  N_\lambda(X) \ll_\eps X^{\frac{23\lambda+3}{40}+\eps} \quad (0 < \lambda \le 2), \qquad
+  N_\lambda(X) \ll_{\eps,\lambda} X^{3/5+\eps} \quad (0 < \lambda < 1).
+\]
+Subsequent 2026 preprints pushed below $3/5$, with H.~Li~\cite{HongminLi2026} obtaining $59969/100033 \approx 0.59949$ and C.~Zeng~\cite{Zeng2026} obtaining $11680007/20000012 \approx 0.58400$.
+
+\subsection{Statement of main theorems}
+
+All upper bounds below are established on the dyadic-$c$ shell
+\begin{equation}\label{eq:Nstar}
+  N^*(\alpha,\lambda;X) := \#\Bigl\{(a,b,c) \in \Z_{>0}^3 :
+  \begin{aligned}
+    &a+b=c,\; \gcd(a,b,c)=1,\; a < b, \\
+    &a \le X^\alpha,\; X/2 < c \le X,\; \rad(abc) \le X^\lambda
+  \end{aligned}
+  \Bigr\}
+\end{equation}
+and transferred to $N_{\mathrm{rel}}(\alpha,\lambda;X)$ and $N_\lambda(X)$ by dyadic summation (Proposition~\ref{prop:dyadic}). We separate our theorems cleanly into two independently verified tiers at fixed cutoff $d_0 = 6$:
+\begin{itemize}[itemsep=2pt]
+\item \textbf{Tier~1 (Purely elementary):} Uses zero Bombieri--Pila or Salberger determinant-method inputs—only elementary Fourier moments (\textsf{L442}, single-block \textsf{Hua}), 2D lattice reduction (\textsf{GoN}, \textsf{stCL}, \textsf{diffCL}), prime-indexed and modular cofactor collisions (\textsf{coll}$_p$, \textsf{qcoll}, \textsf{st-qcoll}, \textsf{modcoll}, \textsf{modcoll}$_3$), and elementary Minkowski--B\'ezout counting (\textsf{cop\_elem}).
+\item \textbf{Tier~2 (Full determinant-method frontier):} Adjoins two determinant-method inputs built on Salberger~\cite{Salberger2023}: single-modulus Coppersmith curve lifting via a Jonqui\`eres $\Q$-automorphism (\textsf{cbp1}, using~\cite[Theorem~1.2]{Salberger2023}) and a Brill--Gordan large-coefficient diagonal-surface fourth-moment bound (\textsf{salb\_f}, using~\cite[Theorem~3.16, Theorem~6.3, Corollary~6.5, and Theorem~9.4(b)]{Salberger2023} plus~\cite{ColliotThelene2002}).
+\end{itemize}
+
+\begin{theorem}[Unrestricted $abc$ exceptional set]\label{thm:unrestricted}
+For every $\eps > 0$ and uniformly for all $0 < \lambda \le 1$:
+\begin{enumerate}[label=(\roman*)]
+\item \emph{Tier~1 (purely elementary, zero determinant method):}
+\begin{equation}\label{eq:main_9_16}
+  N^*(1,\lambda;X) \ll_\eps X^{9/16 + \eps} \qquad\text{and}\qquad N_\lambda(X) \ll_\eps X^{9/16 + \eps} \qquad (9/16 = 0.5625).
+\end{equation}
+\item \emph{Tier~2 (full \textsf{cbp1} + \textsf{salb\_f} frontier):}
+\begin{equation}\label{eq:main_full}
+  N^*(1,\lambda;X) \ll_\eps X^{4224/7637 + \eps} \qquad\text{and}\qquad N_\lambda(X) \ll_\eps X^{4224/7637 + \eps},
+\end{equation}
+where $4224/7637 = 0.5530967\ldots$ improves~\eqref{eq:main_9_16} by $0.00940$, improves~\cite{Zeng2026} ($\approx 0.58400$) by $0.03090$, and improves the fixed-$\lambda$ bound $3/5$ of~\cite[Theorem~1.3]{BLT2026} by $0.04690$ while holding uniformly through $\lambda = 1$.
+\end{enumerate}
+\end{theorem}
+
+\begin{table}[ht]
+\centering
+\caption{Progress on the unrestricted $abc$ exceptional set $N_\lambda(X) \ll X^{\delta+\eps}$ ($0 < \lambda < 1$, and uniformly for $0 < \lambda \le 1$ in de~Bruijn, Zeng, and Theorem~\ref{thm:unrestricted}).}
+\label{tab:history}
+\footnotesize
+\setlength{\tabcolsep}{2.8pt}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Reference & Analytic inputs & Exact $\delta$ & Decimal \\
+\midrule
+de~Bruijn (1962)~\cite{deBruijn1962} & Radical pair count & $2/3$ & $0.66667$ \\
+BLT v1 (2024)~\cite{BLTv1_2024} & Anatomy + $L^3$ + \textsf{GoN} + Thue/det. & $33/50$ & $0.66000$ \\
+R.~Li (2025)~\cite{Li2025} & Refined BLT optimization & $56/85$ & $0.65882$ \\
+Bernert (2025)~\cite{Bernert2025} & Streamlined BLT (sketched $8/13$) & $8/13$ & $0.61538$ \\
+BBLT v2 (2026, Thm.~1.3)~\cite{BLT2026} & Full BBLT MILP (fixed $\lambda < 1$) & $3/5$ & $0.60000$ \\
+H.~Li (2026)~\cite{HongminLi2026} & Two-letter collision + Farkas (preprint) & $59969/100033$ & $0.59949$ \\
+C.~Zeng (Nov 2026)~\cite{Zeng2026} & Modulus locking (preprint) & $11680007/20000012$ & $0.58400$ \\
+\midrule
+\textbf{Theorem~\ref{thm:unrestricted}(i) (Tier~1 Elem)} & \textbf{Purely elementary ($d_0=6$, zero curves)} & $\mathbf{9/16}$ & $\mathbf{0.56250}$ \\
+\textbf{Theorem~\ref{thm:unrestricted}(ii) (Tier~2 Full)} & \textbf{Tier~1 + \textsf{cbp1} + large-coeff.\ \textsf{salb\_f}} & $\mathbf{4224/7637}$ & $\mathbf{0.55310}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{theorem}[Imbalanced frontier and extended square-root plateau]\label{thm:imbalanced}
+For every $\eps > 0$ and uniformly for all $0 < \lambda \le 1$:
+\begin{enumerate}[label=(\roman*)]
+\item \emph{Extended elementary square-root plateau:} For every $\alpha \in [0, 97/206]$ (where $97/206 = 0.470873\ldots$),
+\begin{equation}\label{eq:plateau}
+  N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_\eps X^{1/2 + \eps},
+\end{equation}
+proved completely elementarily (Tier~1) with implied constant independent of $\alpha$ and $\lambda$.
+\item \emph{Square-root imbalance threshold:} At $\alpha = 1/2$ ($a \le \sqrt{c}$), purely elementarily (Tier~1),
+\begin{equation}\label{eq:alpha_half}
+  N_{\mathrm{rel}}(1/2,\lambda;X) \ll_\eps X^{263/522 + \eps} \qquad (263/522 = 0.503831\ldots).
+\end{equation}
+\item \emph{Full two-tier $\alpha$-curve:} For every $\alpha$ in Table~\ref{tab:imbalanced}, $N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_{\alpha,\eps} X^{\delta(\alpha)+\eps}$ holds with the exact Tier~1 (elementary) and Tier~2 (full) exponents listed there; for every $\alpha \le 4/5$, Tier~1 already attains the exact Tier~2 optimum.
+\end{enumerate}
+\end{theorem}
+
+\begin{theorem}[Sub-critical frontier $\lambda < 1$]\label{thm:subcritical}
+For every $(\alpha,\lambda)$ in Table~\ref{tab:subcritical} and every $\eps > 0$,
+\[
+  N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_{\alpha,\lambda,\eps} X^{\delta(\alpha,\lambda)+\eps},
+\]
+holds completely elementarily (Tier~1) with the certified exact rational exponents listed in Table~\ref{tab:subcritical}; at every point in Table~\ref{tab:subcritical}, the Tier~1 primal witness satisfies all Tier~2 disjunctions (\textsf{cbp1} and \textsf{salb\_f}) as well, so both tiers share the exact same optimum.
+\end{theorem}
+
+\begin{table}[ht]
+\centering
+\caption{Certified two-tier imbalanced exponents ($\lambda = 1$, $d_0 = 6$) compared against de~Bruijn and this repository's uncertified $d_0=6$ pair + $L^3$ + \textsf{GoN} baseline. In the Tier~2 column, ``---'' denotes points where Tier~1 (purely elementary) already attains the exact Tier~2 optimum (verified against all \textsf{cbp1} and \textsf{salb\_f} disjunctions). Unmarked entries have zero-tail primal witnesses (hence are exact optima for every cutoff $d \ge 6$); entries marked $^\dagger$ carry nonzero tail weight at $d_0 = 6$.}
+\label{tab:imbalanced}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+$\alpha$ & de~Bruijn & Base LP ($d_0=6$) & \textbf{Tier~1 (Elem)} & \textbf{Tier~2 (Full)} & Best Decimal \\
+\midrule
+$0$      & $1/2$ & $1/2$     & $\mathbf{1/2}$           & ---                          & $0.500000$ \\
+$1/3$    & $2/3$ & $4/7$     & $\mathbf{1/2}$           & ---                          & $0.500000$ \\
+$2/5$    & $2/3$ & $4/7$     & $\mathbf{1/2}$           & ---                          & $0.500000$ \\
+$4/9$    & $2/3$ & $4/7$     & $\mathbf{1/2}$           & ---                          & $0.500000$ \\
+$15/32$  & $2/3$ & $4/7$     & $\mathbf{1/2}$           & ---                          & $0.500000$ \\
+$97/206$ & $2/3$ & $4/7$     & $\mathbf{1/2}$           & ---                          & $0.500000$ \\
+$1/2$    & $2/3$ & $4/7$     & $\mathbf{263/522}$       & ---                          & $0.503831$ \\
+$5/9$    & $2/3$ & $\ge 4/7$ & $\mathbf{23/45}$         & ---                          & $0.511111$ \\
+$2/3$    & $2/3$ & $36/61$   & $\mathbf{34/63}^\dagger$ & ---                          & $0.539683$ \\
+$3/4$    & $2/3$ & $29/49$   & $\mathbf{137/251}^\dagger$ & ---                        & $0.545817$ \\
+$4/5$    & $2/3$ & $29/49$   & $\mathbf{686/1255}^\dagger$ & ---                       & $0.546614$ \\
+$9/10$   & $2/3$ & $143/240$ & $\mathbf{213/380}^\dagger$ & $\mathbf{84209/152740}^\dagger$ & $0.551323$ \\
+$1$      & $2/3$ & $3/5$     & $\mathbf{9/16}$          & $\mathbf{4224/7637}$         & $0.553097$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[ht]
+\centering
+\caption{Certified sub-critical exponents ($\lambda < 1$, $d_0=6$), compared against~\cite[Thm.~1.2]{BLT2026} ($(23\lambda+3)/40$) and the uncertified $d_0=6$ pair + $L^3$ + \textsf{GoN} baseline. Every entry is proved purely elementarily (Tier~1) and simultaneously attains the exact Tier~2 optimum. Entries marked $^\dagger$ carry nonzero tail weight at $d_0 = 6$ (at $\lambda \in \{1/2, 3/5\}$, $2\lambda/3$ is also sharp for all $d \ge 6$).}
+\label{tab:subcritical}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}rrrrrr@{}}
+\toprule
+$\alpha$ & $\lambda$ & BBLT Thm.~1.2 & Base LP ($d_0=6$) & \textbf{Tier~1 = Tier~2} & Decimal \\
+\midrule
+$1$   & $1/2$   & $29/80$  & $1/3$     & $\mathbf{1/3}^\dagger$      & $0.333333$ \\
+$1$   & $3/5$   & $21/50$  & $2/5$     & $\mathbf{2/5}^\dagger$      & $0.400000$ \\
+$1$   & $7/10$  & $191/400$& $109/250$ & $\mathbf{29/70}^\dagger$    & $0.414286$ \\
+$1$   & $4/5$   & $107/200$& $59/120$  & $\mathbf{7/15}^\dagger$     & $0.466667$ \\
+$1$   & $9/10$  & $237/400$& $71/130$  & $\mathbf{119/235}^\dagger$  & $0.506383$ \\
+$1$   & $19/20$ & $497/800$& $377/660$ & $\mathbf{19/35}^\dagger$    & $0.542857$ \\
+\midrule
+$1/2$ & $4/5$   & $107/200$& $7/15$    & $\mathbf{1759/4250}$        & $0.413882$ \\
+$1/2$ & $9/10$  & $237/400$& $47/90$   & $\mathbf{145/306}^\dagger$  & $0.473856$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Direct fixed-cutoff anatomy, empirical \texorpdfstring{$L^4$}{L4} savings, and elementary Fourier moments}\label{sec:anatomy}
+
+\begin{proposition}[Dyadic transfer and monotonicity]\label{prop:dyadic}
+Fix $0 \le \alpha \le \alpha' \le 1$, $0 < \lambda \le \lambda' \le 1$, and $\delta \ge 0$.
+\begin{enumerate}[label=(\roman*)]
+\item \emph{Monotonicity:} For all $X \ge 1$, both $N^*(\alpha,\lambda;X) \le N^*(\alpha',\lambda';X)$ and $N_{\mathrm{rel}}(\alpha,\lambda;X) \le N_{\mathrm{rel}}(\alpha',\lambda';X)$ hold, and $N_\lambda(X) = 2 N_{\mathrm{rel}}(1,\lambda;X) \le 2 N_{\mathrm{rel}}(1,1;X)$.
+\item \emph{Dyadic transfer:} If $N^*(\alpha,\lambda;Y) \ll_{\alpha,\lambda,\eps} Y^{\delta+\eps}$ for every $\eps > 0$ and all $Y \ge 1$, then $N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_{\alpha,\lambda,\eps} X^{\delta+\eps}$ for every $\eps > 0$ and all $X \ge 1$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+Part~(i) follows from set inclusions (for $0 < \lambda \le 1$, the diagonal $1+1=2$ has $\rad(2)=2 \ge 2^\lambda$). For~(ii), partition $1 \le c \le X$ into $\le \log_2 X + 2$ dyadic shells $Y_k/2 < c \le Y_k$ ($Y_k = 2^{-k}X$), each contributing $\ll_{\alpha,\lambda,\eps} Y_k^{\delta+\eps/2} \le X^{\delta+\eps/2}$, and absorb $\log_2 X + 2 \ll_\eps X^{\eps/2}$.
+\end{proof}
+
+\begin{lemma}[Uniform fixed-radical count]\label{lem:fixed_rad}
+For every $\eta > 0$, uniformly over all integers $R \ge 1$ and $X \ge 2$,
+\[
+  \#\{n \le X : \rad(n) = R\} \ll_\eta X^\eta.
+\]
+\end{lemma}
+\begin{proof}
+Assume $X \ge 16$ and $R \le X$, and write $n = \prod_{p \mid R} p^{e_p} \le X$. Primes $p \le P := \sqrt{\log X}$ contribute at most $(\log_2 X)^{\sqrt{\log X}}$ choices of exponents $1 \le e_p \le \log_2 X$. For primes $p > P$, at most $s \le \frac{2\log X}{\log\log X}$ primes divide $R$ and the excess exponents $f_p = e_p - 1 \ge 0$ satisfy $\sum f_p \le F_{\max} := \lfloor \frac{2\log X}{\log\log X}\rfloor$, giving at most $\binom{F_{\max}+s}{s} \le 2^{4\log X / \log\log X}$ choices. Multiplying yields $\exp(O(\log X / \log\log X)) \ll_\eta X^\eta$.
+\end{proof}
+
+\subsection{Direct fixed-\texorpdfstring{$d_0$}{d0} decomposition and exact dyadic shell}
+Fix $d_0 \ge 4$ ($d_0 = 6$ in all certified bounds) and $X \ge 3$. Factor every integer $n \in [1, X]$ uniquely into pairwise coprime blocks as
+\begin{equation}\label{eq:decomp}
+  n = n_{\mathrm{tail}} \prod_{i=1}^{d_0} u_i(n)^i, \qquad
+  u_i(n) := \prod_{\substack{p \mid n \\ v_p(n) = i}} p \quad\text{(squarefree)}, \qquad
+  n_{\mathrm{tail}} := \prod_{\substack{p \mid n \\ v_p(n) \ge d_0 + 1}} p^{v_p(n)}.
+\end{equation}
+Partition $N^*(\alpha,\lambda;X)$ into $O_{d_0}((\log X)^{3d_0+6})$ dyadic \emph{anatomy cells} by pinning, for each $n \in \{a,b,c\}$:
+(a) $u_i(n) \in [X^{n_i}, 2 X^{n_i})$ ($1 \le i \le d_0$, $n_i = k_{n,i}\frac{\log 2}{\log X} \ge 0$),
+(b) $\rad(n_{\mathrm{tail}}) \in [X^{n_r}, 2 X^{n_r})$ ($n_r = k_{n,r}\frac{\log 2}{\log X} \ge 0$), and
+(c) $n_{\mathrm{tail}} \in [X^{n_r + W_n}, 2 X^{n_r + W_n})$ with $W_n := d_0 n_r + m_n\frac{\log 2}{\log X} \ge d_0 n_r$.
+Define
+\begin{equation}\label{eq:cell_vars}
+  n_V := \sum_{i=1}^{d_0} n_i + n_r, \qquad
+  L := a_V + b_V + c_V, \qquad
+  \sigma_n := \sum_{i=1}^{d_0} i n_i + n_r + W_n,
+\end{equation}
+and set $s_a := \alpha$, $s_b := 1$, $s_c := 1$, $C_{d_0} := 2^{1+d_0(d_0+1)/2}$, and $\eta_0(X) := \frac{\log(4 C_{d_0})}{\log X}$. On every non-empty cell, $X^{\sigma_n} \le n < C_{d_0} X^{\sigma_n}$, yielding the exact anatomical constraints
+\begin{equation}\label{eq:base_anat}
+  n_i, n_r \ge 0, \qquad
+  W_n \ge d_0 n_r, \qquad
+  \sigma_n \le s_n \quad (n \in \{a,b,c\}), \qquad
+  L \le \lambda,
+\end{equation}
+and—since $a < b$, $a+b=c$, and $X/2 < c \le X$ imply $b > X/4$—the \emph{exact dyadic shell inequalities}
+\begin{equation}\label{eq:bc_large}
+  1 - \eta_0(X) \le \sigma_b \le 1 \qquad\text{and}\qquad 1 - \eta_0(X) \le \sigma_c \le 1.
+\end{equation}
+
+Let $N_{\mathrm{cell}}$ be the number of cell triples and $D := \max(0, \log_X N_{\mathrm{cell}})$. For each $n \in \{a,b,c\}$, let $\mathcal{N}_n \subseteq [1, X]$ be the set of values of $n$ occurring in the cell, and set $S_n(\theta) := \sum_{m \in \mathcal{N}_n} e(\theta m)$. By Lemma~\ref{lem:fixed_rad}, $|\mathcal{N}_n| \ll_{d_0,\eta} X^{n_V + \eta}$ and the pair bounds
+\begin{equation}\label{eq:pair}
+  D \le i_V + j_V + O(\eta) \qquad (\{i,j\} \subset \{a,b,c\})
+\end{equation}
+hold immediately.
+
+\subsection{Empirical \texorpdfstring{$L^4$}{L4} saving, \textsf{L442}, single-block Hua moments, and \textsf{GoN}}
+
+A key architectural refinement over earlier anatomical formulations is defining the Fourier coordinate $F_n$ as the \emph{empirical $L^4$ additive-energy saving} on the cell itself:
+\begin{equation}\label{eq:F_empirical}
+  F_n := \max\!\bigl(0,\; 3 n_V - \log_X \|S_n\|_4^4\bigr) \ge 0 \qquad (n \in \{a,b,c\}),
+\end{equation}
+and setting $(A, B, C) := (F_a, F_b, F_c)$. Because $\|S_n\|_4^4 \le |\mathcal{N}_n|^3 \ll_{d_0,\eta} X^{3 n_V + 3\eta}$, we always have
+\begin{equation}\label{eq:L4_by_F}
+  \log_X \|S_n\|_4^4 \le 3 n_V - F_n + 3\eta + O_{d_0,\eta}\!\left(\frac{1}{\log X}\right).
+\end{equation}
+Consequently, \emph{any} upper bound on $\|S_n\|_4^4$ yields a valid lower bound on $F_n$, which then feeds simultaneously into \textsf{L442} and into all single-block Hua moments below.
+
+\begin{proposition}[Prime-saving $L^4$ bounds and asymmetric \textsf{L442}]\label{prop:l442}
+On every non-empty anatomy cell of $N^*(\alpha,\lambda;X)$, for every $\eta > 0$:
+\begin{enumerate}[label=(\roman*)]
+\item For every letter $n \in \{a,b,c\}$ and every prime $p \le d_0$,
+\begin{equation}\label{eq:fourier_p}
+  \sum_{\substack{1 \le i \le d_0 \\ p \mid i}} n_i - F_n \le 4\eta + O_{d_0,\eta}\!\left(\frac{1}{\log X}\right).
+\end{equation}
+\item For every permutation $(i,j,k)$ of $(a,b,c)$,
+\begin{equation}\label{eq:l442_lin}
+  4 D + F_i + F_j - 3 i_V - 3 j_V - 2 k_V \le 9\eta + O_{d_0,\eta}\!\left(\frac{1}{\log X}\right).
+\end{equation}
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+For~(i), factor each $m \in \mathcal{N}_n$ canonically as $m = r x^p$ with $x = \prod_{p \mid i \le d_0} u_i(m)^{i/p}$ and $r = m/x^p$. By Lemma~\ref{lem:fixed_rad}, $|\mathcal{R}_n| \ll_{d_0,\eta} X^{n_V - \sum_{p \mid i} n_i + \eta}$. By Cauchy--Schwarz over $r \in \mathcal{R}_n$,
+\[
+  \|S_n\|_4^4 \le |\mathcal{R}_n| \sum_{r \in \mathcal{R}_n} \int_0^1 |S_{n,r}(\theta)|^2 |S_n(\theta)|^2\,d\theta
+  = |\mathcal{R}_n| \cdot \#\bigl\{(r,x_1,x_2,m',m'') : r(x_1^p - x_2^p) = m'' - m'\bigr\}.
+\]
+Diagonal terms ($x_1 = x_2$) contribute $|\mathcal{N}_n|^2$. For off-diagonal terms ($x_1 \neq x_2$), fixing $m' \neq m''$ ($< |\mathcal{N}_n|^2$ choices) determines $r \mid |m''-m'|$ and $h = |x_1-x_2| \mid (|m''-m'|/r)$ up to $O_\eta(X^\eta)$ divisor choices; since $t \mapsto (t+h)^p - t^p$ is strictly increasing on $t > 0$ for $p \ge 2$, $(x_1, x_2)$ is uniquely fixed. Thus $\|S_n\|_4^4 \ll_{d_0,\eta} X^{3 n_V - \sum_{p \mid i} n_i + 4\eta}$, proving~\eqref{eq:fourier_p} via~\eqref{eq:F_empirical}.
+
+For~(ii), Parseval gives $\|S_k\|_2^2 = |\mathcal{N}_k| \ll_{d_0,\eta} X^{k_V + \eta}$. Orthogonality and H\"older's inequality with exponents $(4,4,2)$ give $N_{\mathrm{cell}} \le \int_0^1 S_a S_b \overline{S_c}\,d\theta \le \|S_i\|_4 \|S_j\|_4 \|S_k\|_2$, which combined with~\eqref{eq:L4_by_F} yields~\eqref{eq:l442_lin}.
+\end{proof}
+
+\begin{proposition}[Single-block elementary Hua Weyl-sum moments \textsf{Hua}]\label{prop:hua}
+On every non-empty anatomy cell of $N^*(\alpha,\lambda;X)$, for every $\eta > 0$, every permutation $(i,j,k)$ of $(a,b,c)$, and every \emph{single} block index $m \in \{3,\dots,d_0\}$:
+\begin{align}
+  12 D + F_i + F_j + F_k + 3 i_m - 11 i_V - 7 j_V - 7 k_V &\le O(\eta) && (m \ge 3,\; \text{outer } L^6), \label{eq:hua6} \\
+  16 D + F_j + F_k + 6 i_m - 16 i_V - 9 j_V - 9 k_V &\le O(\eta) && (m \ge 3,\; L^8), \label{eq:hua8} \\
+  32 D + F_j + F_k + 8 i_m - 32 i_V - 17 j_V - 17 k_V &\le O(\eta) && (m \ge 4,\; L^{16}), \label{eq:hua16} \\
+  64 D + F_j + F_k + 10 i_m - 64 i_V - 33 j_V - 33 k_V &\le O(\eta) && (m \ge 5,\; L^{32}), \label{eq:hua32}
+\end{align}
+up to $O_{d_0,\eta}(1/\log X)$.
+\end{proposition}
+\begin{proof}
+Factor each $n \in \mathcal{N}_i$ uniquely as $n = r x^m$ where $x := u_m(n) \in [X^{i_m}, 2 X^{i_m})$ is the \emph{single} multiplicity-$m$ squarefree block and $r = n/x^m$ ranges over a cofactor set $\mathcal{R}_i$ of size $|\mathcal{R}_i| \ll_{d_0,\eta} X^{i_V - i_m + \eta}$. (Restricting to a single block $m$ is essential: a multi-block product $x = u_m u_{2m}^2$ would have height $X^{i_m + 2 i_{2m}} > X^{i_m + i_{2m}}$.)
+
+Write $S_{i,r}(\theta) := \sum_{x \in \mathcal{X}_i(r)} e(\theta r x^m)$ with $\mathcal{X}_i(r) \subseteq [1, 2 X^{i_m}]$. For any integer $k \in \{1,\dots,m\}$, the change of variables $\theta \mapsto r\theta$ leaves the $L^{2^k}(\R/\Z)$ norm unchanged, and orthogonality followed by Hua's Lemma~\cite{Hua1938} yields
+\[
+  \|S_{i,r}\|_{2^k}^{2^k}
+  \le \int_0^1 \Bigl|\sum_{1 \le x \le 2 X^{i_m}} e(\theta x^m)\Bigr|^{2^k}\,d\theta
+  \ll_{m,\eta} X^{(2^k - k) i_m + \eta}.
+\]
+Applying Minkowski's triangle inequality in $L^{2^k}([0,1])$ to $S_i = \sum_{r \in \mathcal{R}_i} S_{i,r}$ gives
+\begin{equation}\label{eq:hua_norm}
+  \|S_i\|_{2^k} \le \sum_{r \in \mathcal{R}_i} \|S_{i,r}\|_{2^k}
+  \ll_{d_0,\eta} X^{i_V - i_m + \frac{2^k - k}{2^k} i_m + 2\eta}
+  = X^{i_V - \frac{k}{2^k} i_m + 2\eta} \qquad (1 \le k \le m).
+\end{equation}
+For $k \in \{3, 4, 5\}$ ($m \ge k$), H\"older's inequality with exponents $\bigl(2^k, \frac{2^{k+1}}{2^k-1}, \frac{2^{k+1}}{2^k-1}\bigr)$ and $L^2$--$L^4$ interpolation $\|S_n\|_{\frac{2^{k+1}}{2^k-1}} \le \|S_n\|_4^{2^{1-k}} \|S_n\|_2^{1-2^{1-k}}$ together with~\eqref{eq:L4_by_F} and~\eqref{eq:hua_norm} give
+\[
+  N_{\mathrm{cell}} \le \|S_i\|_{2^k} \|S_j\|_{\frac{2^{k+1}}{2^k-1}} \|S_k\|_{\frac{2^{k+1}}{2^k-1}}
+  \ll_{d_0,\eta} X^{i_V - \frac{k}{2^k} i_m + \frac{(2^k+1) j_V - F_j + (2^k+1) k_V - F_k}{2^{k+1}} + O(\eta)},
+\]
+yielding~\eqref{eq:hua8}, \eqref{eq:hua16}, and~\eqref{eq:hua32} for $k = 3, 4, 5$ respectively. Finally, for $m \ge 3$, outer $L^4$--$L^8$ interpolation $\|S_i\|_6 \le \|S_i\|_4^{1/3} \|S_i\|_8^{2/3}$ gives $\log_X \|S_i\|_6 \le \frac{11 i_V - F_i - 3 i_m}{12} + O(\eta)$; applying H\"older with $(6, 12/5, 12/5)$ and $\|S_n\|_{12/5} \le \|S_n\|_4^{1/3} \|S_n\|_2^{2/3} \ll X^{(7 n_V - F_n)/12 + O(\eta)}$ yields~\eqref{eq:hua6}.
+\end{proof}
+
+\begin{proposition}[Fixed-$d_0$ geometry-of-numbers disjunction \textsf{GoN}~\cite{BLT2026}]\label{prop:gon}
+For any subset triple $(I_a,I_b,I_c) \subseteq \{1,\dots,d_0,r\}^3$ with $1 \in I_n$ ($n \in \{a,b,c\}$), set
+\[
+  M(I) := \sum_n \sum_{i \in I_n} n_i, \qquad
+  E(I) := \sum_n \biggl(\sum_{i \in I_n \cap \{1,\dots,d_0\}} (i-1) n_i + \mathbf{1}_{r \in I_n} W_n\biggr).
+\]
+On every non-empty cell of $N^*(\alpha,\lambda;X)$, up to $O(\eta + 1/\log X)$, at least one of
+\begin{equation}\label{eq:gon}
+  D - L + M(I) \le 0 \qquad\text{or}\qquad D - L - E(I) \le -1
+\end{equation}
+holds.
+\end{proposition}
+\begin{proof}
+Factor $n = n' x_n$ with $x_n := n_{\mathrm{tail}}^{\mathbf{1}_{r \in I_n}} \prod_{i \in I_n \cap \{1,\dots,d_0\}} u_i(n)^i$. Freezing $(a',b',c')$ costs $O_{d_0,\eta}(X^{L-M(I)+\eta})$, and applying Heath-Brown's primitive lattice lemma~\cite[Lemma~3]{HeathBrown1984} to $a' x_a + b' x_b - c' x_c = 0$ with $c' x_c = c > X/2$ yields~\eqref{eq:gon}.
+\end{proof}
+
+\section{Elementary lattice, collision, and Coppersmith--B\'ezout disjunctions (Tier~1)}\label{sec:tier1}
+
+We first record the two elementary primitives used throughout this section.
+
+\begin{lemma}[CRT $k$-th root bound]\label{lem:crt}
+For every integer $k \ge 1$, every modulus $Q \ge 1$, and every $r \in \Z$ with $\gcd(r,Q) = 1$,
+\[
+  \#\bigl\{t \in (\Z/Q\Z)^\times : t^k \equiv r \pmod Q\bigr\} \le 2 k^{\omega(Q)} \ll_{k,\eta} Q^\eta.
+\]
+\end{lemma}
+\begin{proof}
+By CRT, multiply the kernel sizes of $t \mapsto t^k$ on $(\Z/p^{e_p}\Z)^\times$: at most $k$ for odd $p$ (cyclic) and at most $2k$ for $p = 2$. Since $\omega(Q) = O(\log Q / \log\log Q)$, $2 k^{\omega(Q)} \ll_{k,\eta} Q^\eta$.
+\end{proof}
+
+\begin{lemma}[Primitive lattice points in sheared parallelograms]\label{lem:lg}
+Let $\Lambda \subseteq \Z^2$ be a rank-$2$ lattice of determinant $Q \ge 1$, let $\theta \in \R$, and let $H_1, H_2 > 0$. The number of primitive positive lattice points $(x,y) \in \Lambda \cap \Z_{>0}^2$ with $\gcd(x,y)=1$, $|x - \theta y| \le H_1$, and $y \le H_2$ is at most $1 + 36 H_1 H_2 / Q$.
+\end{lemma}
+\begin{proof}
+Under $T(x,y) = ((x-\theta y)/H_1, y/H_2)$, $\tilde{\Lambda} = T(\Lambda)$ has covolume $Q/(H_1 H_2)$ and every image $\mathbf{u}$ is primitive with $\|\mathbf{u}\|_2 \le \sqrt{2}$. Let $(\mathbf{f}_1, \mathbf{f}_2)$ be a Lagrange--Gauss reduced basis of $\tilde{\Lambda}$ ($\|\mathbf{f}_1\|_2 \le \|\mathbf{f}_2\|_2$, $|\langle \mathbf{f}_1, \mathbf{f}_2\rangle| \le \frac{1}{2}\|\mathbf{f}_1\|_2^2$). Writing $\mathbf{u} = s \mathbf{f}_1 + r \mathbf{f}_2$ gives $|s|\|\mathbf{f}_1\|_2 \le 2$ and $|r|\|\mathbf{f}_2\|_2 \le 2$. If $\|\mathbf{f}_2\|_2 > 2$, then $r = 0$, leaving at most one primitive positive point ($\pm\mathbf{f}_1$). If $\|\mathbf{f}_2\|_2 \le 2$, Hadamard's inequality gives at most $(4/\|\mathbf{f}_1\|_2 + 1)(4/\|\mathbf{f}_2\|_2 + 1) \le 36/(\|\mathbf{f}_1\|_2\|\mathbf{f}_2\|_2) \le 36 H_1 H_2 / Q$ points.
+\end{proof}
+
+For any letter $n \in \{a,b,c\}$ and subset $J \subseteq \{1,\dots,d_0,r\}$, denote its radical mass and log-size by
+\[
+  M_n(J) := \sum_{i \in J \cap \{1,\dots,d_0\}} n_i + \mathbf{1}_{r \in J} n_r, \qquad
+  S_n(J) := \sum_{i \in J \cap \{1,\dots,d_0\}} i n_i + \mathbf{1}_{r \in J}(n_r + W_n),
+\]
+and for a prime $p \le d_0$, write $M_{n,p} := \sum_{p \mid i \le d_0} n_i$ and $r_{n,p} := n_V - M_{n,p}$.
+
+\begin{theorem}[Self-Thinning Congruence--Lattice disjunction \textsf{stCL}]\label{thm:stcl}
+Fix $\tau \in \{a,b,c\}$ with $\{l_1,l_2\} = \{a,b,c\}\setminus\{\tau\}$, a subset $J_\tau \subseteq \{1,\dots,d_0,r\}$, $k \in \{1,\dots,d_0\}$, and subsets $E_1, E_2$ ($E_1 \cup E_2 \neq \emptyset$) of $\{1,\dots,d_0,r\}$ ($k=1$) or multiples of $k$ in $\{1,\dots,d_0\}$ ($k \ge 2$). Set $M_j := M_{l_j}(E_j)$ and $S_j := S_{l_j}(E_j)$. On every non-empty cell, up to $O(\eta + \eta_0(X))$, at least one of the following holds:
+\begin{equation}\label{eq:stcl_disj}
+\begin{aligned}
+  D - (l_1)_V - (l_2)_V + M_1 + M_2 - M_\tau(J_\tau) &\le 0, \\
+  D - (l_1)_V - (l_2)_V + M_1 + M_2 - M_\tau(J_\tau) - \frac{S_1 + S_2}{k} + S_\tau(J_\tau) - \sigma_\tau &\le -1.
+\end{aligned}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Set $Q := \tau_{\mathrm{tail}}^{\mathbf{1}_{r \in J_\tau}} \prod_{i \in J_\tau \cap \{1,\dots,d_0\}} u_i(\tau)^i \asymp X^{S_\tau(J_\tau)}$ and $l_j = \kappa_j X_j^k$ with $X_j \asymp B_j := X^{S_j/k}$. Freezing $(Q, \kappa_1, \kappa_2)$ costs $O_{d_0,\eta}(X^{(l_1)_V - M_1 + (l_2)_V - M_2 + M_\tau(J_\tau) + \eta/2})$. Coprimality gives $\gcd(X_1, X_2) = 1$, $\gcd(\kappa_1\kappa_2 X_1 X_2, Q) = 1$, and $\kappa_1 X_1^k \pm \kappa_2 X_2^k \equiv 0 \pmod Q$. By Lemma~\ref{lem:crt}, $X_1 \equiv t X_2 \pmod Q$ for $O_{k,\eta}(X^{\eta/2})$ residue classes $t \in (\Z/Q\Z)^\times$. If $\tau \in \{b,c\}$, $1 - \sigma_\tau \le \eta_0(X)$ by~\eqref{eq:bc_large} and Lemma~\ref{lem:lg} (or 1D arithmetic-progression counting if $E_1$ or $E_2$ is empty) yields $\ll 1 + B_1 B_2 / Q$. If $\tau = a$, then $b, c \in (X/4, X]$ while $a < C_{d_0} X^{\sigma_a}$, so with $\theta = (\kappa_c/\kappa_b)^{1/k}$ we get $0 < \theta X_2 - X_1 \le \frac{a}{k \kappa_b X_1^{k-1}} \ll_{d_0} B_1 X^{-(1-\sigma_a)}$ (and symmetrically if $E_1$ or $E_2$ is empty, confining the lone variable to an interval of length $O_{d_0}(B_1 B_2 X^{-(1-\sigma_a)})$); Lemma~\ref{lem:lg} (or 1D progression counting) yields $\ll 1 + B_1 B_2 X^{-(1-\sigma_a)} / Q$. Combining both regimes gives~\eqref{eq:stcl_disj}.
+\end{proof}
+
+\begin{theorem}[Multi-block self-thinning difference lattice \textsf{diffCL}]\label{thm:diffcl}
+Fix $\tau \in \{a,b,c\}$ with $\{l_1,l_2\} = \{a,b,c\}\setminus\{\tau\}$, distinct integers $h, \ell \in \{1,\dots,d_0\}$, $J_\tau \subseteq \{1,\dots,d_0,r\}$, and nonempty subsets $E_1, E_2$ of valid multiples of $h, \ell$ respectively (allowing $r \in E_1$ if $h=1$, and $r \in E_2$ if $\ell=1$). Let $g := \gcd(h,\ell)$, $s := h/g$, $d := \ell/g$, and write $f := (l_1)_V + (l_2)_V - M_{l_1}(E_1) - M_{l_2}(E_2) + M_\tau(J_\tau)$, $S_1 := S_{l_1}(E_1)$, $S_2 := S_{l_2}(E_2)$, $q := S_\tau(J_\tau)$. On every non-empty cell, up to $O(\eta + \eta_0(X))$, at least one of the following holds:
+\begin{align}
+  D - f &\le 0, \label{eq:diffcl_b0} \\
+  D - f - \frac{S_1 + S_2}{2g} + \frac{q}{2} - \frac{\sigma_\tau}{2} &\le -\frac{1}{2}, \label{eq:diffcl_b1}
+\end{align}
+or—solely when $s = 1$ or $d = 1$—the third branch (writing $W_{\mathrm{lin}} := 2 S_1 + S_2$ if $s=1$ and $S_1 + 2 S_2$ if $d=1$):
+\begin{equation}\label{eq:diffcl_b2}
+  D - f - \frac{W_{\mathrm{lin}}}{2g} + q - \sigma_\tau \le -1.
+\end{equation}
+(Since $\sigma_\tau \le 1$, omitting the self-thinning shifts $\frac{1-\sigma_\tau}{2}$ in~\eqref{eq:diffcl_b1} and $1-\sigma_\tau$ in~\eqref{eq:diffcl_b2} gives the valid unthinned variant.)
+\end{theorem}
+\begin{proof}
+Factor $l_1 = \kappa_1 x^h = \kappa_1 (x^s)^g$ and $l_2 = \kappa_2 y^\ell = \kappa_2 (y^d)^g$ with $A_1 := X^{S_1/g} \asymp x^s$, $A_2 := X^{S_2/g} \asymp y^d$, and $Q \asymp X^q$ dividing $\tau$. Freeze $(Q, \kappa_1, \kappa_2)$ at cost $O_{d_0,\eta}(X^{f+\eta/2})$, and fix one of the $O_{g,\eta}(X^{\eta/2})$ residue classes $t \in (\Z/Q\Z)^\times$ from Lemma~\ref{lem:crt} such that $(x^s, y^d)$ lies in the rank-$2$ lattice $\Lambda_t = \{(u,v) \in \Z^2 : u \equiv t v \pmod Q\}$ of determinant $Q$. Let $\mathcal{S}$ be the set of admissible pairs $(x, y)$ in this fiber, with $M := |\mathcal{S}|$.
+
+Every $(x,y) \in \mathcal{S}$ has $\gcd(x^s, y^d) = 1$, and $(x^s, y^d)$ lies in the sheared parallelogram $P := \{(u,v) : |u - \theta v| \le H_1,\; |v| \le H_2\}$ where $H_2 \asymp A_2$ and $H_1 \asymp A_1 X^{-(1-\sigma_\tau)+\eta_0(X)}$ (taking $\theta = 0$ if $\tau \in \{b,c\}$, where $1 - \sigma_\tau \le \eta_0(X)$, and $\theta = (\kappa_2/\kappa_1)^{1/g}$ if $\tau = a$, where $|x^s - \theta y^d| \ll A_1 X^{-(1-\sigma_a)}$ exactly as in Theorem~\ref{thm:stcl}). Let $(\mathbf{f}_1, \mathbf{f}_2)$ be a Lagrange--Gauss reduced basis of $T(\Lambda_t)$ as in Lemma~\ref{lem:lg}. If $\|\mathbf{f}_2\|_2 > 2$, then all points in $\Lambda_t \cap P$ lie on $\Z\mathbf{f}_1$, so primitivity forces $M \le 1$, giving~\eqref{eq:diffcl_b0}.
+
+Suppose now that $\|\mathbf{f}_2\|_2 \le 2$. Then $\Lambda_t \cap (P - P)$ contains $O(H_1 H_2 / Q)$ lattice points in total (scaling $P$ by $2$). Count ordered pairs $((x_1,y_1),(x_2,y_2)) \in \mathcal{S}^2$ with $(x_1,y_1) \neq (x_2,y_2)$ via the nonzero difference vector $(u, v) := (x_1^s - x_2^s,\, y_1^d - y_2^d) \in \Lambda_t \cap (P - P)$. Note that for any $r \ge 2$ and any fixed integer $w \neq 0$, $z_1^r - z_2^r = w$ determines positive $(z_1, z_2)$ up to $O_\eta(X^\eta)$ choices (as $z_1 - z_2 \mid w$ and $t \mapsto (t+h)^r - t^r$ is strictly monotone).
+\begin{itemize}[itemsep=2pt]
+\item \emph{Case~1 ($s \ge 2$ and $d \ge 2$):} Pairs with $u \neq 0, v \neq 0$ have $O(H_1 H_2 / Q)$ choices of $(u,v)$ and $O_\eta(X^\eta)$ choices of $(x_1,x_2,y_1,y_2)$ per $(u,v)$. Pairs with $u = 0$ ($x_1 = x_2$, $v \neq 0$) satisfy $Q \mid v$ and $|v| \ll H_2 X^{-(1-\sigma_\tau)+\eta_0(X)}$ (since $|\tau_1 - \tau_2| \ll X^{\sigma_\tau}$), giving $\ll_\eta X^\eta A_1^{1/s} H_2 X^{-(1-\sigma_\tau)+\eta_0}/Q \ll_\eta X^\eta H_1 H_2 / Q$ pairs; symmetrically for $v = 0$. Hence $M(M-1) \ll_\eta X^\eta H_1 H_2 / Q$, so $M \ll_\eta 1 + X^{\eta/2}\sqrt{H_1 H_2 / Q}$, giving~\eqref{eq:diffcl_b0} or~\eqref{eq:diffcl_b1}.
+\item \emph{Case~2 ($s = 1, d \ge 2$; symmetrically $d = 1, s \ge 2$):} Fix $(u, v) \in \Lambda_t \cap (P - P)$ with $v \neq 0$ ($O(H_1 H_2 / Q)$ choices); $v = y_1^d - y_2^d$ fixes $(y_1, y_2)$ up to $O_\eta(X^\eta)$ choices. Once $y_1$ is fixed, any two $x_1, x_1'$ appearing with $y_1$ satisfy $Q \mid (x_1 - x_1')$ and $|x_1 - x_1'| \ll H_1$, leaving $\ll 1 + H_1/Q$ choices of $x_1$ (hence $x_2 = x_1 - u$). Pairs with $v = 0$ ($y_1 = y_2$, $x_1 \neq x_2$) force $H_1 \gg Q$ and contribute at most $A_2^{1/d} (H_1 / Q)^2 \le H_2 (H_1 / Q)^2$ (as $d \ge 2$). Thus
+\[
+  M(M-1) \ll_\eta X^\eta \frac{H_1 H_2}{Q}\Bigl(1 + \frac{H_1}{Q}\Bigr), \qquad
+  M \ll_\eta 1 + X^{\eta/2}\sqrt{\frac{H_1 H_2}{Q}} + X^{\eta/2}\frac{H_1 \sqrt{H_2}}{Q},
+\]
+yielding~\eqref{eq:diffcl_b0}, \eqref{eq:diffcl_b1}, or~\eqref{eq:diffcl_b2}. \qedhere
+\end{itemize}
+\end{proof}
+
+\begin{proposition}[Prime-indexed cross-letter collision \textsf{coll}$_p$]\label{prop:coll_p}
+For every permutation $(i,j,k)$ of $(a,b,c)$ and every prime $p \le d_0$, on every non-empty cell up to $O(\eta)$, at least one of
+\begin{equation}\label{eq:coll_p}
+  D - r_{i,p} - j_V \le 0 \qquad\text{or}\qquad 2 D - r_{i,p} - j_V - 2 k_V \le 0
+\end{equation}
+holds, where $r_{i,p} = i_V - M_{i,p} = i_V - \sum_{p \mid h \le d_0} i_h$.
+\end{proposition}
+\begin{proof}
+Factor $i = r_i x^p$ with $x = \prod_{p \mid h \le d_0} u_h(i)^{h/p}$. Group cell triples by $(r_i, j)$, yielding $G \ll_{d_0,\eta} X^{r_{i,p} + j_V + \eta}$ groups of sizes $N(r_i,j)$. By Cauchy--Schwarz, $N_{\mathrm{cell}}^2 / G \le N_{\mathrm{cell}} + E$, where $E$ counts ordered pairs of distinct triples sharing $(r_i, j)$. For every off-diagonal pair, $k_1 \neq k_2$ satisfies $k_1 - k_2 = \pm r_i(x_1^p - x_2^p) \neq 0$ (sign fixed by the permutation). Fixing $(k_1, k_2)$ ($\le |\mathcal{N}_k|^2 \ll X^{2 k_V + 2\eta}$ choices) determines $r_i \mid |k_1-k_2|$ and $x_1 - x_2 \mid (|k_1-k_2|/r_i)$, hence $(x_1, x_2)$ and $j = \pm(k_1 - r_i x_1^p)$, up to $O_\eta(X^\eta)$ choices (as $p \ge 2$). Thus $E \ll_{d_0,\eta} X^{2 k_V + 3\eta}$, giving~\eqref{eq:coll_p}.
+\end{proof}
+
+\begin{remark}
+Crucially, Proposition~\ref{prop:coll_p} uses the explicit prime mass $M_{i,p}$ rather than the empirical $L^4$ coordinate $F_i$, keeping \textsf{coll}$_p$ completely decoupled from Tier~2's \textsf{salb\_f} lower bounds on $F_i$.
+\end{remark}
+
+\begin{theorem}[Cofactor-divisor collision \textsf{qcoll} and self-thinned \textsf{st-qcoll}]\label{thm:qcoll}
+Fix a permutation $(i,j,k)$ of $(a,b,c)$, a prime $p \le d_0$, a divisor subset $J_q \subseteq \{1,\dots,d_0,r\}$ disjoint from $\{h \le d_0 : p \mid h\}$, an integer $m \in \{1,\dots,d_0\}$, and a nonempty subset $E_k$ of valid multiples of $m$ (allowing $r \in E_k$ if $m=1$). Set $M_q := M_i(J_q)$, $S_q := S_i(J_q)$, $M_k := M_k(E_k)$, $u := S_k(E_k)/m$, and $\Delta_{k,i} := \max(0,\, \sigma_k - \sigma_i)$. On every non-empty cell, up to $O(\eta + \eta_0(X))$:
+\begin{enumerate}[label=(\roman*)]
+\item \emph{Variant \texttt{ac} (Method~A+C):} At least one of the three inequalities holds:
+\begin{align*}
+  D - r_{i,p} - j_V &\le 0, \\
+  2 D - r_{i,p} - j_V - M_q - 2 k_V + 2 M_k - 2 u + S_q + \Delta_{k,i} &\le 0, \\
+  4 D - 3 i_V + M_{i,p} - 2 j_V - M_q - 3 k_V + 3 M_k - u &\le 0.
+\end{align*}
+\item \emph{Variant \texttt{ap} (Method~A$'$):} At least one of the three inequalities holds:
+\begin{align*}
+  D - r_{i,p} - j_V &\le 0, \\
+  2 D - r_{i,p} - j_V - M_q - 2 k_V + M_k &\le 0, \\
+  2 D - r_{i,p} - j_V - M_q - 2 k_V + M_k - u + S_q + \Delta_{k,i} &\le 0.
+\end{align*}
+\end{enumerate}
+(Omitting $\Delta_{k,i}$ gives the 3-branch \textsf{qcoll} disjunctions; adjoining the degenerate branch $\sigma_k - \sigma_i \le 0$ and replacing $\Delta_{k,i}$ by $\sigma_k - \sigma_i$ gives the 4-branch \textsf{st-qcoll} disjunctions.)
+\end{theorem}
+\begin{proof}
+As in Proposition~\ref{prop:coll_p}, factor $i = r_i x^p$, group triples by $(r_i, j)$ ($G \ll X^{r_{i,p}+j_V+\eta}$ groups), and let $E$ count off-diagonal pairs $(k_1 \neq k_2)$ sharing $(r_i, j)$, so either $N_{\mathrm{cell}} \le 2 G$ (Branch~0) or $N_{\mathrm{cell}}^2 \le 2 G E$. For every such pair, $Q \mid r_i$ (the divisor built from $J_q$, $Q \asymp X^{S_q}$, $\le O(X^{M_q+\eta})$ choices of $Q$) satisfies $k_1 \equiv k_2 \pmod Q$, $\gcd(k_1 k_2, Q) = 1$, and $|k_1 - k_2| = |i_1 - i_2| \ll X^{\sigma_i}$, while $k_1, k_2 \asymp X^{\sigma_k}$. Moreover, each pair $(k_1, k_2)$ with $k_1 \neq k_2$ arises from $O_\eta(X^\eta)$ pairs $(r_i, j)$ as in Proposition~\ref{prop:coll_p}. Factor $k_1 = \kappa_1 y_1^m$, $k_2 = \kappa_2 y_2^m$ with $y_1, y_2 \asymp X^u$ and $\kappa_1, \kappa_2$ ranging over $O(X^{k_V - M_k + \eta})$ cofactors.
+
+For~(ii) (Method~A$'$), fix $(Q, k_1, \kappa_2)$ ($O(X^{M_q + 2 k_V - M_k + 3\eta})$ choices). Then $y_2^m \equiv k_1 \kappa_2^{-1} \pmod Q$ restricts $y_2$ to $O_{m,\eta}(X^\eta)$ residue classes mod~$Q$ by Lemma~\ref{lem:crt}, while $|\kappa_2 y_2^m - k_1| \ll X^{\sigma_i}$ forces $|y_2 - (k_1/\kappa_2)^{1/m}| \ll X^{u - \Delta_{k,i}}$ (since $\kappa_2 y_2^{m-1} \asymp X^{\sigma_k - u}$). Thus there are $\ll X^\eta(1 + X^{u - \Delta_{k,i} - S_q})$ choices for $y_2$, proving~(ii).
+
+For~(i) (Method~A+C), dyadically partition off-diagonal pairs by $d = \gcd(y_1, y_2) \asymp X^\delta$ ($\delta \in [0, u]$), writing $y_1 = d w_1, y_2 = d w_2$ with $\gcd(w_1, w_2) = 1$ and $w_1, w_2 \asymp X^{u-\delta}$. On one hand (Method~A), fixing $(Q, \kappa_1, \kappa_2, d)$ ($O(X^{M_q + 2(k_V - M_k) + \delta + 3\eta})$ choices), $\kappa_1 w_1^m \equiv \kappa_2 w_2^m \pmod Q$ and $|\kappa_1 w_1^m - \kappa_2 w_2^m| \ll X^{\sigma_i - m\delta}$ confine primitive $(w_1, w_2)$ to $O_{m,\eta}(X^\eta)$ lattices of det~$Q$ inside a sheared parallelogram of base $X^{u-\delta}$ and width $X^{u-\delta - \Delta_{k,i}}$. Lemma~\ref{lem:lg} gives
+\[
+  E_\delta \ll_{d_0,\eta} X^{M_q + 2(k_V - M_k) + 4\eta}\bigl(X^\delta + X^{2u - \delta - S_q - \Delta_{k,i}}\bigr).
+\]
+On the other hand (Method~C), fixing $i_1 = r_i x_1^p$ ($O(X^{i_V+\eta})$ choices) and $x_2$ ($O(X^{M_{i,p}+\eta})$ choices) fixes $i_2 = r_i x_2^p$ and the nonzero difference $k_1 - k_2 = \pm(i_1 - i_2)$, which is divisible by $d^m$ ($O_\eta(X^\eta)$ choices for $d$); fixing $\kappa_1$ and $w_1 \asymp X^{u-\delta}$ then fixes $k_1 = \kappa_1 d^m w_1^m$, $j$, and $k_2$, giving $E_\delta \ll_{d_0,\eta} X^{i_V + M_{i,p} + (k_V - M_k) + u - \delta + 4\eta}$. The second term of Method~A peaks at $\delta = 0$ (giving Branch~1), while the geometric mean of the first term of Method~A and Method~C eliminates $\delta$ and gives Branch~2.
+\end{proof}
+
+\begin{theorem}[Modular cofactor collisions \textsf{modcoll} and \textsf{modcoll}$_3$]\label{thm:modcoll}
+Fix a permutation $(i,j,k)$ of $(a,b,c)$, a prime $p \le d_0$, and a nonempty divisor subset $J_q \subseteq \{1,\dots,d_0,r\}$ disjoint from $\{h \le d_0 : p \mid h\}$, with $m_q := M_i(J_q)$, $q := S_i(J_q)$, and $g := r_{i,p} + j_V$. On every non-empty cell, up to $O(\eta)$:
+\begin{enumerate}[label=(\roman*)]
+\item \emph{$1$-block \textsf{modcoll}:} For any block $h_1 \in \{1,\dots,d_0\}$ of letter $k$ with $u_1 := k_{h_1}$,
+\[
+  D \le \max\!\Bigl(g,\; k_V + \frac{g + m_q - \min(u_1, q)}{2}\Bigr) \qquad (\text{3-way disjunction}).
+\]
+\item \emph{$2$-block \textsf{modcoll}:} For distinct $h_1, h_2 \in \{1,\dots,d_0\}$ with $u_1 := k_{h_1}$, $u_2 := k_{h_2}$,
+\[
+  D \le \max\!\Bigl(g,\; k_V + \frac{g + m_q - \frac{1}{2}\min(2 u_1, q) - \frac{1}{2}\min(2 u_2, q)}{2}\Bigr) \qquad (\text{5-way disjunction}).
+\]
+\item \emph{$3$-block \textsf{modcoll}$_3$ (strictly requiring $h_1 = 1$):} For distinct $h_2, h_3 \in \{2,\dots,d_0\}$ with $u_1 := k_1$, $u_2 := k_{h_2}$, $u_3 := k_{h_3}$,
+\[
+  D \le \max\!\Bigl(g,\; k_V + \frac{g + m_q - H_{123}}{2}\Bigr) \qquad (\text{7-way disjunction}),
+\]
+where $H_{123} := \frac{1}{2}\min(2 u_2, q) + \frac{1}{2}\min\bigl(q,\; 2 u_1 + \frac{1}{2}\min(2 u_3, q)\bigr)$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+As in Theorem~\ref{thm:qcoll}, either $D \le g + O(\eta)$ or $N_{\mathrm{cell}}^2 \ll X^{g + \eta} E$, where $E$ is at most $O_\eta(X^\eta)$ times $\sum_Q \#\{(k_1,k_2) \in \mathcal{N}_k^2 : k_1 \equiv k_2 \pmod Q\}$. For a fixed $Q \asymp X^q$ ($O(X^{m_q+\eta})$ choices), every $k \in \mathcal{N}_k$ is coprime to $Q$. Write $k = \kappa \prod_{\nu=1}^t s_\nu^{h_\nu}$ ($t \in \{1,2,3\}$) where $s_\nu = u_{h_\nu}(k) \in \mathcal{S}_\nu \subseteq [U_\nu, 2 U_\nu)$ ($U_\nu = X^{u_\nu}$) are coprime to $Q$, and $\kappa$ ranges over a cofactor set $\mathcal{K}$ of size $|\mathcal{K}| \ll X^{k_V - \sum_{\nu=1}^t u_\nu + \eta}$. By Cauchy--Schwarz over $\kappa \in \mathcal{K}$,
+\[
+  \#\{(k_1,k_2) \in \mathcal{N}_k^2 : k_1 \equiv k_2 \pmod Q\}
+  \le |\mathcal{K}|^2 \sum_{x \in (\Z/Q\Z)^\times} R(x)^2,
+\]
+where $R(x) := \#\{(s_1,\dots,s_t) \in \prod \mathcal{S}_\nu : \prod s_\nu^{h_\nu} \equiv x \pmod Q\}$.
+
+For $t = 1$, $R(x) \ll_{h_1,\eta} Q^\eta(1 + U_1/Q)$ by Lemma~\ref{lem:crt}, so $\sum_x R(x)^2 \ll X^\eta U_1(1 + U_1/Q) = X^\eta U_1^2 \max(U_1^{-1}, Q^{-1})$, proving~(i).
+
+For $t = 2, 3$, orthogonality of Dirichlet characters $\chi$ modulo $Q$ yields
+\[
+  \sum_{x \in (\Z/Q\Z)^\times} R(x)^2 = \frac{1}{\varphi(Q)} \sum_\chi \prod_{\nu=1}^t |\hat{f}_\nu(\chi)|^2,
+  \qquad \hat{f}_\nu(\chi) := \sum_{s \in \mathcal{S}_\nu} \chi(s^{h_\nu}).
+\]
+For any single block $\nu$, Parseval and Lemma~\ref{lem:lg} (splitting $g_s = \gcd(s_1 s_2, s_3 s_4) \le 4 U_\nu^2$, applying Lemma~\ref{lem:crt} to $(s_1 s_2/g_s)^{h_\nu} \equiv (s_3 s_4/g_s)^{h_\nu} \pmod Q$, and noting $\tau(A) = O_\eta(X^\eta)$) give
+\begin{equation}\label{eq:mod_4th}
+  E_\nu := \frac{1}{\varphi(Q)} \sum_\chi |\hat{f}_\nu(\chi)|^4
+  = \sum_{z \in (\Z/Q\Z)^\times} r_\nu(z)^2
+  \ll_{h_\nu,\eta} X^\eta U_\nu^2\Bigl(1 + \frac{U_\nu^2}{Q}\Bigr),
+\end{equation}
+where $r_\nu(z) := \#\{(s_1,s_2) \in \mathcal{S}_\nu^2 : (s_1 s_2)^{h_\nu} \equiv z \pmod Q\}$. For $t = 2$, Cauchy--Schwarz over $\chi$ gives $\sum R(x)^2 \le E_1^{1/2} E_2^{1/2}$, yielding~(ii).
+
+For $t = 3$ with $h_1 = 1$, Cauchy--Schwarz over $\chi$ pairing $|\hat{f}_2(\chi)|^2$ against $|\hat{f}_1(\chi)\hat{f}_3(\chi)|^2$ yields
+\begin{gather*}
+  \sum_{x \in (\Z/Q\Z)^\times} R(x)^2 \le E_2^{1/2} E_{13}^{1/2}, \\
+  E_{13} := \#\bigl\{(s_1,\dots,s_4,w_1,\dots,w_4) : s_1 s_2 (w_1 w_2)^{h_3} \equiv s_3 s_4 (w_3 w_4)^{h_3} \pmod Q\bigr\}.
+\end{gather*}
+Write $A = s_1 s_2$, $C = s_3 s_4 \in [1, 4 U_1^2]$ (using $h_1 = 1$ crucially!), $g_A = \gcd(A, C) \in [1, 4 U_1^2]$, and $(A, C) = g_A (a_0, c_0)$ with $\gcd(a_0, c_0) = 1$ and $a_0, c_0 \le Z := 4 U_1^2 / g_A$. For $\gamma \in (\Z/Q\Z)^\times$, let $M_3(\gamma) := \#\{(w_1,\dots,w_4) : (w_3 w_4)^{h_3} \equiv \gamma (w_1 w_2)^{h_3} \pmod Q\}$ and $\Lambda_\gamma := \{(a_0,c_0) \in \Z^2 : a_0 \equiv \gamma c_0 \pmod Q\}$. Then $\sum_\gamma M_3(\gamma) = U_3^4$, and Cauchy--Schwarz plus~\eqref{eq:mod_4th} yields
+\[
+  M_{\max} := \max_\gamma M_3(\gamma) \le \sum_y r_3(y)^2 = E_3 \ll_{h_3,\eta} X^\eta U_3^2\Bigl(1 + \frac{U_3^2}{Q}\Bigr).
+\]
+By Lemma~\ref{lem:lg}, $\#(\Lambda_\gamma^{\mathrm{prim}} \cap [1, Z]^2) \le \mathbf{1}_{\Lambda_\gamma^{\mathrm{prim}} \cap [1,Z]^2 \neq \emptyset} + 36 Z^2 / Q$. Summing over $g_A$ and $\gamma$:
+\begin{itemize}[itemsep=1pt]
+\item The $36 Z^2/Q$ term sums to $\ll \frac{U_1^4}{Q} \sum_\gamma M_3(\gamma) = \frac{U_1^4 U_3^4}{Q}$.
+\item For each $g_A$, at most $Z^2$ classes $\gamma \equiv a_0 c_0^{-1} \pmod Q$ satisfy $\Lambda_\gamma^{\mathrm{prim}} \cap [1,Z]^2 \neq \emptyset$, so the indicator term is bounded by $\min(U_3^4,\, Z^2 M_{\max}) = \min\bigl(U_3^4,\, 16 U_1^4 M_{\max} / g_A^2\bigr)$. Balancing at $g_A^* = 4 U_1^2 \sqrt{M_{\max}}/U_3^2 \le 4 U_1^2$ gives
+\[
+  \sum_{g_A = 1}^{4 U_1^2} \min\!\left(U_3^4,\, \frac{16 U_1^4 M_{\max}}{g_A^2}\right)
+  \ll U_1^2 U_3^2 \sqrt{M_{\max}}
+  \ll_{h_3,\eta} X^{\eta/2} U_1^2 U_3^3 \Bigl(1 + \frac{U_3^2}{Q}\Bigr)^{1/2}.
+\]
+\end{itemize}
+Combining both terms and multiplying by $\tau(A)\tau(C) \ll_\eta X^{\eta/2}$ yields
+\[
+  \frac{E_{13}^{1/2}}{(U_1 U_3)^2} \ll_{h_3,\eta} X^\eta \Bigl(Q^{-1/2} + U_1^{-1} U_3^{-1/2} + U_1^{-1} Q^{-1/4}\Bigr),
+\]
+which combined with $E_2^{1/2}/U_2^2 \ll X^\eta(U_2^{-1} + Q^{-1/2})$ proves~(iii).
+\end{proof}
+
+\begin{theorem}[Elementary Coppersmith--B\'ezout disjunction \textsf{cop\_elem}]\label{thm:cop_elem}
+Fix a permutation $(i,j,k)$ of $(a,b,c)$, an integer $p \in \{2,\dots,d_0\}$, a nonempty subset $E_i \subseteq \{h \le d_0 : p \mid h\}$, and divisor subsets $J_j \subseteq \{1,\dots,d_0,r\}$ (possibly empty) and $J_k \subseteq \{1,\dots,d_0,r\}$ (nonempty). Define $f := i_V - M_i(E_i) + M_j(J_j) + M_k(J_k)$, $u_x := S_i(E_i)/p$, $q_j := S_j(J_j)$, $q_k := S_k(J_k)$, and $s_0 := \sigma_j - q_j$. On every non-empty cell, up to $O(\eta + \eta_0(X))$, at least one of the three inequalities holds:
+\begin{align}
+  q_j + q_k - \sigma_j &\le 0, \label{eq:cop_deg} \\
+  D - f - (\sigma_j - q_j) &\le 0, \label{eq:cop_b1} \\
+  D - f - u_x + \frac{q_j + q_k - \sigma_j}{p} - (\sigma_j - q_j) &\le 0. \label{eq:cop_b2}
+\end{align}
+\end{theorem}
+\begin{proof}
+Assume $q_j + q_k - \sigma_j > \eta$ (otherwise~\eqref{eq:cop_deg} holds up to $\eta$). Factor $i = r_i x^p$ ($x \asymp X^{u_x}$ from $E_i$), $j = Y_j s$ ($Y_j \asymp X^{q_j}$, $s \in [1, S_0]$ with $S_0 \asymp X^{s_0}$), and $k = Z_k t$ ($Z_k \asymp X^{q_k}$, $t \in [1, T_0]$ with $T_0 \asymp X^{\sigma_k - q_k}$). Freeze $(r_i, Y_j, Z_k)$ at cost $O_{d_0,\eta}(X^{f+\eta/2})$. By coprimality, $\gcd(Y_j, Z_k) = 1$, and $a + b = c$ reads
+\begin{equation}\label{eq:cop_eq}
+  Y_j s + \epsilon Z_k t = \pm r_i x^p \qquad (\epsilon \in \{\pm 1\} \text{ fixed by } (i,j,k)).
+\end{equation}
+Fix an integer $m = m(p, \eta) \ge 2$ large enough that $\frac{p(p(2m+1)+3)}{2(p(m-1)+3)} \le p + \eta/4$, and set
+\[
+  \ell := \min\!\left(u_x,\; \frac{q_j + q_k - \sigma_j}{p + \eta/2}\right) - \eta.
+\]
+Cover $x \in [X^{u_x}, C_{d_0} X^{u_x}]$ by $O(1 + X^{u_x - \ell})$ short intervals $x = x_0 + u$ with $|u| \le L_x := X^\ell$. For each center $x_0$, define the monic polynomial $h(u) \in \Z[u]$ of degree $p$ satisfying $h(u) \equiv \pm Y_j^{-1} r_i (x_0 + u)^p \pmod{Z_k}$, so every solution $(s, u) \in [1, S_0] \times [-L_x, L_x]$ satisfies $s - h(u) \equiv 0 \pmod{Z_k}$.
+
+Following Coppersmith~\cite{Coppersmith1997}, let $\Omega_m := \{(a,b) \in \Z_{\ge 0}^2 : p a + b \le p m\}$ and form the shift polynomials $g_{a,b}(s, u) := Z_k^{m-a} (s - h(u))^a u^b$ for $(a,b) \in \Omega_m$, all divisible by $Z_k^m$ at every solution $(s, u)$. Ordering $\Omega_m$ by $(a, b)$ lexicographically makes the coefficient matrix of $\{g_{a,b}(S_0 s, L_x u)\}$ lower triangular with diagonal entries $Z_k^{m-a} S_0^a L_x^b$. A direct summation gives
+\[
+  \sum_{(a,b) \in \Omega_m} a = \frac{m(m+1)}{6}\bigl(p(m-1) + 3\bigr), \qquad
+  \sum_{(a,b) \in \Omega_m} b = \frac{p m(m+1)}{12}\bigl(p(2m+1) + 3\bigr),
+\]
+so $\frac{\sum b}{\sum a} = \frac{p(p(2m+1)+3)}{2(p(m-1)+3)} \le p + \eta/4$. Since $Z_k / S_0 \asymp X^{q_k - (\sigma_j - q_j)} = X^{q_j + q_k - \sigma_j}$, our choice of $\ell$ ensures $\prod_{\Omega_m} (Z_k^{m-a} S_0^a L_x^b) < (Z_k^m / |\Omega_m|)^{|\Omega_m|}$ for all sufficiently large $X$. By Minkowski's First Theorem, there is a \emph{nonzero} integer polynomial $Q(s, u)$ of total degree $\le p m = O_{p,\eta}(1)$ such that $\|Q(S_0 s, L_x u)\|_1 < Z_k^m$, forcing $Q(s, u) = 0$ identically over $\Z$ for every solution $(s, u) \in [1, S_0] \times [-L_x, L_x]$.
+
+To bound solutions of $Q(s, u) = 0$ elementarily: for each of the $S_0$ integer values of $s \in [1, S_0]$, either $Q(s, \cdot) \not\equiv 0$ (yielding $\le p m$ values of $u$), or $Q(s, \cdot) \equiv 0$ (occurring for at most $m$ values of $s$, each fixing $j = Y_j s$ and restricting $x = x_0 + u$ to $O_{p,\eta}(X^\eta)$ residue classes mod~$Z_k$ by Lemma~\ref{lem:crt}, with $L_x \ll Z_k^{1/p} < Z_k$ giving $O_{p,\eta}(X^\eta)$ lifts). Hence each interval holds $O_{p,\eta}(X^\eta S_0)$ solutions. Multiplying by $O(X^{f + (u_x - \ell) + \eta/2})$ yields~\eqref{eq:cop_b1} or~\eqref{eq:cop_b2}.
+\end{proof}
+
+\section{Single-modulus curve lifting and large-coefficient diagonal surfaces (Tier~2)}\label{sec:tier2}
+
+\subsection{Single-modulus Coppersmith curve lifting (\textsf{cbp1})}
+
+Replacing the trivial $O(S_0)$ projection at the end of Theorem~\ref{thm:cop_elem} by Salberger's uniform plane-curve bound~\cite[Theorem~1.2]{Salberger2023} and lifting low-degree factors via a Jonqui\`eres $\Q$-automorphism produces a sharp $7$-/$5$-branch disjunction requiring only the \emph{single} threshold $q_j + q_k > \sigma_j$.
+
+\begin{theorem}[Single-modulus Coppersmith--Salberger curve lifting \textsf{cbp1}]\label{thm:cbp1}
+Under the hypotheses and notation of Theorem~\ref{thm:cop_elem}, set $t_0 := \sigma_k - q_k$ and $\ell_1 := u_x$, $\ell_2 := (q_j + q_k - \sigma_j)/p$, $\ell := \min(\ell_1, \ell_2)$. On every non-empty cell, up to $O(\eta + \eta_0(X))$, if $q_j + q_k - \sigma_j > 0$, then BOTH of the following hold:
+\begin{enumerate}[label=(\roman*)]
+\item \emph{Mode~\texttt{a} ($7$ branches: \eqref{eq:cop_deg} plus $c \in \{1,2\}$ and $3$ curve branches):}
+\begin{equation}\label{eq:cbp1_a}
+  D \le f + (u_x - \ell) + \max\!\left(\frac{s_0}{p},\; \frac{\ell}{p},\; \frac{t_0}{p}\right).
+\end{equation}
+\item \emph{Mode~\texttt{b} ($5$ branches: \eqref{eq:cop_deg} plus $c \in \{1,2\}$ and $2$ curve branches):}
+\begin{equation}\label{eq:cbp1_b}
+  D \le f + (u_x - \ell) + \max\!\left(\frac{s_0}{p},\; \frac{p-1}{p^2} t_0 + \frac{\ell}{p}\right).
+\end{equation}
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+Construct the nonzero polynomial $Q(s, u) \in \Z[s, u]$ of degree $\le p m = O_{p,\eta}(1)$ exactly as in Theorem~\ref{thm:cop_elem}, and factor $Q(s, u)$ into $O_{p,\eta}(1)$ irreducible polynomials $F(s, u) \in \Q[s, u]$. We bound the number of admissible solutions $(s, u) \in [1, S_0] \times [-L_x, L_x]$ on each factor $V(F)$:
+\begin{enumerate}[label=(\arabic*),itemsep=2pt]
+\item \emph{Vertical factors ($\deg_s F = 0$):} Each root $u = u_0$ fixes $x = x_0 + u_0$, hence fixes $s \equiv \pm Y_j^{-1} r_i x^p \pmod{Z_k}$. Since $q_j + q_k > \sigma_j \implies Z_k > S_0$ for large $X$, there is at most $1$ lift $s \in [1, S_0]$ per root, contributing $O_{p,\eta}(1)$ points.
+\item \emph{Horizontal factors ($\deg_u F = 0$):} Each root $s = s_0$ fixes $j = Y_j s_0$ ($\gcd(j, Z_k) = 1$), so $r_i(x_0+u)^p \equiv \pm Y_j s_0 \pmod{Z_k}$ has $O_{p,\eta}(X^\eta)$ roots mod~$Z_k$ by Lemma~\ref{lem:crt}, and $L_x \ll Z_k^{1/p} < Z_k$ gives $\le 3$ lifts per root, contributing $O_{p,\eta}(X^\eta)$ points.
+\item \emph{Factors irreducible over $\Q$ but reducible over $\overline{\Q}$:} Every rational point lies in the intersection of distinct Galois-conjugate factors, giving $\le (\deg F)^2 = O_{p,\eta}(1)$ points by B\'ezout's theorem.
+\item \emph{Geometrically irreducible factors $F(s, u)$ of degree $d_1 \ge p$ ($\deg_s F, \deg_u F \ge 1$):} Homogenize $C_1 := V(F) \subset \PP^2$ in the box $(B_0, B_1, B_2) = (1, S_0, L_x)$, so $V = S_0 L_x$ and $T = \max_{c_{i,j}\neq 0} S_0^i L_x^j$. By Salberger~\cite[Theorem~1.2]{Salberger2023} ($r=1$),
+\[
+  N(C_1; 1, S_0, L_x) \ll_{d_1} \left(\frac{V}{T^{1/d_1}}\right)^{1/d_1} \log(S_0 L_x) + 1.
+\]
+Choose a monomial $s^a u^{d_1 - a}$ occurring in $F$. Since $\deg_s F \ge 1$ and $\deg_u F \ge 1$, we also have $T \ge \max(S_0, L_x)$. If $S_0 \ge L_x$: when $a \ge 1$, $V/T^{1/d_1} \le S_0^{1-a/d_1} L_x^{a/d_1} \le S_0$; when $a = 0$, $T \ge \max(L_x^{d_1}, S_0)$, so $(V/T^{1/d_1})^{1/d_1} \le S_0^{1/d_1}$ if $L_x^{d_1} \ge S_0$, while if $L_x^{d_1} < S_0$ then $(V/T^{1/d_1})^{1/d_1} \le S_0^{(d_1-1)/d_1^2} L_x^{1/d_1} < S_0^{1/d_1}$. By $s \leftrightarrow u$ symmetry when $L_x > S_0$, we obtain unconditionally
+\[
+  N(C_1; 1, S_0, L_x) \ll_{p,\eta} \max(S_0, L_x)^{1/p} \log X + 1.
+\]
+\item \emph{Geometrically irreducible factors $F(s, u)$ of degree $1 \le d_1 \le p - 1$ ($\deg_s F \ge 1$):} Let $a := \deg_s F \in [1, d_1]$ and $b_0 := \max\{b : c_{a,b} \neq 0\}$, so $a + b_0 \le d_1 \le p - 1$. Consider the Jonqui\`eres $\Q$-automorphism of $\AAff^2$ induced by~\eqref{eq:cop_eq}:
+\[
+  \phi(t, u) := \left(\frac{\pm r_i (x_0 + u)^p - \epsilon Z_k t}{Y_j},\; u\right),
+\]
+which maps $C_1$ isomorphically onto the geometrically irreducible plane curve $C_2 := V(G(t, u))$ where $G(t, u) := Y_j^a F(\phi(t, u)) \in \Q[t, u]$, carrying $(s, u) \in [1, S_0] \times [-L_x, L_x]$ bijectively to $(t, u) \in [1, T_0] \times [-L_x, L_x]$. Every term $c_{i,j} s^i u^j$ of $F$ transforms into a polynomial of total degree $p i + j$. Because $j \le d_1 - i \le p - 1 - i$ for $i < a$, we have
+\[
+  p i + j \le p(a - 1) + (p - 1 - i) \le p a - 1 < p a + b_0 \qquad (i < a),
+\]
+so \emph{no cancellation can occur} in the leading term $u^{pa+b_0}$: $G(t, u)$ has exact total degree $d_2 := p a + b_0 \ge p$, and BOTH monomials $u^{d_2}$ (coefficient $c_{a,b_0}(\pm r_i)^a \neq 0$) and $t^a u^{b_0}$ (coefficient $c_{a,b_0}(-\epsilon Z_k)^a \neq 0$) occur in $G(t, u)$.
+
+Applying Salberger~\cite[Theorem~1.2]{Salberger2023} ($r=1$) to $C_2$ in box $(1, T_0, L_x)$ gives $V_2 = T_0 L_x$ and $T_2 \ge \max(L_x^{d_2},\; T_0^a L_x^{b_0})$:
+\begin{itemize}[itemsep=1pt]
+\item Using $T_2 \ge L_x^{d_2}$ gives $(V_2 / T_2^{1/d_2})^{1/d_2} \le T_0^{1/d_2} \le T_0^{1/p}$, proving~\eqref{eq:cbp1_a}.
+\item Using $T_2 \ge T_0^a L_x^{b_0}$ gives $(V_2 / T_2^{1/d_2})^{1/d_2} \le T_0^{(d_2 - a)/d_2^2} L_x^{(d_2 - b_0)/d_2^2}$. Since $a \ge 1$, $b_0 \ge 0$, $p \ge 2$, we have $\frac{d_2 - b_0}{d_2^2} = \frac{p a}{(pa+b_0)^2} \le \frac{1}{p}$ and
+\[
+  \frac{p-1}{p^2} - \frac{d_2 - a}{d_2^2}
+  = \frac{(p-1)p^2 a(a-1) + \bigl(2p(p-1)a - p^2\bigr)b_0 + (p-1)b_0^2}{p^2 (pa+b_0)^2} \ge 0
+\]
+(as $2p(p-1)a \ge 2p(p-1) = p^2 + p(p-2) \ge p^2$). Since $T_0^{(p-1)/p^2} L_x^{1/p} \ge L_x^{1/p}$, the $L_x^{1/p}$ branch from~(4) is automatically subsumed, proving the $5$-branch bound~\eqref{eq:cbp1_b}. \qedhere
+\end{itemize}
+\end{enumerate}
+\end{proof}
+
+\subsection{Brill--Gordan upgrade of Salberger's determinant method and \textsf{salb\_f}}
+
+We next upgrade Salberger's diagonal-surface fourth-moment estimate~\cite[Corollary~6.5]{Salberger2023} so that large cofactor coefficients $r_j$ explicitly \emph{decrease} the point count via $T_{\mathrm{coeff}}$, feeding directly into the empirical $L^4$ saving $F_i$ for $d \in \{4, 5, 6\}$.
+
+\begin{lemma}[Brill--Gordan coefficient divisibility for diagonal surfaces]\label{lem:brill_gordan}
+Let $F(\mathbf{x}) = a_0 x_0^d + a_1 x_1^d + a_2 x_2^d + a_3 x_3^d \in \Z[x_0,x_1,x_2,x_3]$ be a primitive diagonal form of degree $d \ge 4$ with $a_0 a_1 a_2 a_3 \neq 0$, ordered so that $|a_0| = \max_{0 \le j \le 3} |a_j| =: H_{\max}$. Let $k \ge d$, $M_k := \binom{k+3}{3}$, $M_{k-d} := \binom{k-d+3}{3}$, and $s := M_k - M_{k-d}$. Let $\mathcal{I}$ be the set of $s$ degree-$k$ monomials not divisible by $x_0^d$. Then for any $s$ integral points $\boldsymbol{\xi}_1,\dots,\boldsymbol{\xi}_s \in \Z^4$ on $X = V(F)$, the integer determinant $\Delta := \det\bigl(m(\boldsymbol{\xi}_l)\bigr)_{m \in \mathcal{I},\, 1 \le l \le s}$ is divisible by $a_0^{M_{k-d}}$. Consequently, in Salberger's determinant method~\cite[Lemma~1.11, Main Lemma~3.2, and Theorem~3.16]{Salberger2023} on a box $B_0 = \cdots = B_3 = B'$ with $H_{\max} = O_d((B')^{3d})$, the quantity $V / T^{1/d} = (B')^3$ may be replaced by
+\[
+  \frac{V}{T_{\mathrm{coeff}}^{1/d}} := \frac{(B')^3}{H_{\max}^{1/d}}.
+\]
+\end{lemma}
+\begin{proof}
+Let $E$ be the $s \times M_k$ integer matrix evaluating all $M_k$ degree-$k$ monomials at $\boldsymbol{\xi}_1,\dots,\boldsymbol{\xi}_s$, and let $K$ be the $M_{k-d} \times M_k$ integer matrix whose rows are the coefficient vectors of $x^{\mathbf{m}} F(\mathbf{x})$ for all $M_{k-d}$ degree-$(k-d)$ monomials $x^{\mathbf{m}}$. Because $F(\boldsymbol{\xi}_l) = 0$, we have $E K^T = 0$.
+
+Order $\mathcal{I}^c$ (the $M_{k-d}$ degree-$k$ monomials divisible by $x_0^d$) in bijection with degree-$(k-d)$ monomials via $x^{\mathbf{m}} \leftrightarrow x_0^d x^{\mathbf{m}}$. Ordering rows and columns by increasing $x_0$-degree makes the $M_{k-d} \times M_{k-d}$ submatrix $K_{\mathcal{I}^c}$ lower triangular with every diagonal entry equal to $a_0$, so $|\det(K_{\mathcal{I}^c})| = |a_0|^{M_{k-d}}$. Symmetrically, the $M_{k-d} \times M_{k-d}$ minor of $K$ on monomials divisible by $x_j^d$ equals $\pm a_j^{M_{k-d}}$ ($j = 0,1,2,3$). Since $\gcd(a_0,a_1,a_2,a_3) = 1$, the greatest common divisor of all maximal minors of $K$ divides $\gcd(a_0^{M_{k-d}},\dots,a_3^{M_{k-d}}) = 1$, so $K$ is primitive over $\Z$ (its Smith normal form is $[I_{M_{k-d}} \mid 0]$).
+
+By the Brill--Gordan / Cauchy--Binet duality identity for $E K^T = 0$ (extending $K$ to a unimodular $M_k \times M_k$ integer matrix), there exists a single integer $c \in \Z$ such that $\det(E_J) = \pm c \det(K_{J^c})$ for every $s$-subset $J$ of columns. Taking $J = \mathcal{I}$ gives $\Delta = \det(E_{\mathcal{I}}) = \pm c a_0^{M_{k-d}}$, so $a_0^{M_{k-d}} \mid \Delta$ as an integer.
+
+Now examine how this factor propagates through~\cite[Sections~1--3]{Salberger2023} ($r = 2$, $V = (B')^4$, $H_{\max} = O_d((B')^{3d}) = O_d(V^{3d/4})$):
+\begin{itemize}[itemsep=1pt]
+\item \emph{Coprimality with local factors:} The reduction $X_p$ is smooth precisely when $p \nmid d a_0 a_1 a_2 a_3$, so the bad-prime product $\pi_{\mathrm{sing}}$ satisfies $\pi_{\mathrm{sing}} \mid d a_0 a_1 a_2 a_3$ and $\log \pi_{\mathrm{sing}} \le \log(d H_{\max}^4) = O_d(1 + \log V)$. Replacing $\pi = q \pi_X$ by $\pi = q \pi_{\mathrm{sing}}$ in~\cite[Theorem~2.2]{Salberger2023} preserves $\sum_{p \mid \pi} (\log p)/p = O_d(\log(1 + \log V q))$ by~\cite[Lemma~1.10]{Salberger2023} and ensures that both $D$ and $D' = \prod p_i^{N_i}$ (with $q \perp \pi_{\mathrm{sing}}$ in~\cite[Main Lemma~3.2(i)]{Salberger2023}) are coprime to $a_0$. Hence $D D' |a_0|^{M_{k-d}} \mid \Delta$.
+\item \emph{Asymptotic saving:} Since $s = \frac{d}{2} k^2 + O_d(k)$ gives $k = (2/d)^{1/2} s^{1/2} + O_d(1)$, we compute
+\[
+  M_{k-d} = \frac{k^3}{6} + O_d(k^2) = \left(\frac{2!}{d}\right)^{1/2} \frac{s^{3/2}}{3 d} + O_d(s),
+\]
+so subtracting $M_{k-d}\log H_{\max}$ from~\cite[eq.~(1.12)]{Salberger2023} replaces $\log(V^{1/3}/T^{1/(3d)}) = \log B'$ by $\log(B'/H_{\max}^{1/(3d)}) = \frac{1}{3}\log((B')^3/H_{\max}^{1/d})$ up to $O_d(s \log H_{\max}) = O_d(s \log V)$. Set $W_{\mathrm{coeff}} := \max(1, (B')^3/H_{\max}^{1/d}) \asymp_d (B')^3/H_{\max}^{1/d}$. Thus~\cite[Theorem~2.2]{Salberger2023} holds with $V/T^{1/d}$ replaced by $W_{\mathrm{coeff}}$.
+\item \emph{Auxiliary height in~\cite[Lemma~2.8 and Lemma~3.13]{Salberger2023}:} For $q \ge e W_{\mathrm{coeff}}^{1/(2\sqrt{d})}$ coprime to $\pi_{\mathrm{sing}}$, $q^{A(s)} |a_0|^{M_{k-d}} \mid \Delta$ forces the full $s \times s$ determinant $\Delta$ to vanish once $s > C(1 + \log V)^2$ ($k = O_d(1 + \log V)$), so the $s \times t$ evaluation matrix $A$ has rank $t < s$. Applying Bombieri--Vaaler's Siegel lemma directly with trivial minor gcd $\Delta_{\mathrm{BV}} = 1$ (requiring no $a_0$-divisibility of $t \times t$ minors) yields an auxiliary surface $Y$ of degree $k = O_d(1 + \log V)$ not containing $X$ with height $H(Y) \le s^{s/2} (B')^{ks} = V^{O_d((1+\log V)^3)}$. In~\cite[Lemma~3.13]{Salberger2023}, replacing $f = O_d(1 + \log V)$ by $f = O_d((1 + \log V)^3)$ merely increases the auxiliary prime set size $\#\Omega$ in $(4 V^{8/(\delta+3)}, 8 V^{8/(\delta+3)}]$ from $O_{d,\delta}(1+\log V)$ to $O_{d,\delta}((1+\log V)^3)$, giving $N(D; \mathbf{B}) = O_{d,\delta}(V^{8/(\delta+3)}(1 + \log V)^5)$, which is still absorbed into $O_{d,\varepsilon}(V^\varepsilon)$ in~\cite[Theorem~3.16]{Salberger2023}.
+\end{itemize}
+Consequently, \cite[Main Lemma~3.2(i) and Theorem~3.16]{Salberger2023} hold with $V/T^{1/d}$ replaced by $W_{\mathrm{coeff}} \asymp_d (B')^3/H_{\max}^{1/d}$ throughout.
+\end{proof}
+
+\begin{theorem}[Large-coefficient Salberger fourth-moment disjunction \textsf{salb\_f}]\label{thm:salb_f}
+Fix a letter $i \in \{a,b,c\}$ and a degree $d \in \{4, 5, 6\}$ ($d \le d_0$). Define the ordinary cofactor log-size $S_{\mathrm{ord}}(i,d) := \sum_{1 \le h \le d_0,\, h \neq d} h i_h$, and let $(c_1, c_2, c_3, c_4) \in \Q_{>0}^4$ be exact rationals satisfying
+\begin{equation}\label{eq:salb_f_params}
+  c_1 \ge \frac{3}{\sqrt{d}}, \qquad
+  c_2 \le \frac{1}{d\sqrt{d}}, \qquad
+  c_3 \ge \frac{3}{2\sqrt{d}} + \frac{2}{d-1}, \qquad
+  c_4 \le \frac{1}{2 d\sqrt{d}}.
+\end{equation}
+(Specifically, we take $(3/2, 1/8, 17/12, 1/16)$ for $d=4$; $(161/120, 4/45, 281/240, 2/45)$ for $d=5$; and $(49/40, 1/15, 81/80, 1/30)$ for $d=6$.) Then on every non-empty anatomy cell, up to $O(\eta + 1/\log X)$, at least one of the four linear inequalities on $F_i$ holds:
+\begin{equation}\label{eq:salb_f_disj}
+\begin{aligned}
+  i_V - F_i &\le 0, &
+  3 i_d - i_V - F_i &\le 0, \\
+  (4 - c_1) i_d + c_2 S_{\mathrm{ord}}(i,d) - i_V - F_i &\le 0, &
+  (4 - c_3) i_d + c_4 S_{\mathrm{ord}}(i,d) - i_V - F_i &\le 0.
+\end{aligned}
+\end{equation}
+\end{theorem}
+\begin{proof}
+Factor each $m \in \mathcal{N}_i$ uniquely as $m = r x^d$ where $x = u_d(m) \in [B, 2 B)$ ($B := X^{i_d}$) and $r = r_{\mathrm{ord}} m_{\mathrm{tail}}$ with $r_{\mathrm{ord}} = \prod_{1 \le h \le d_0, h \neq d} u_h(m)^h \ge X^{S_{\mathrm{ord}}(i,d)}$. Expanding $\|S_i\|_4^4 = \sum_{r_0,r_1,r_2,r_3} N(\mathbf{r}; B)$, where $N(\mathbf{r}; B)$ counts solutions $(x_0,x_1,x_2,x_3) \in [B, 2B)^4$ to
+\begin{equation}\label{eq:diag_eq}
+  r_0 x_0^d + r_1 x_1^d - r_2 x_2^d - r_3 x_3^d = 0,
+\end{equation}
+split solutions into:
+\begin{itemize}[itemsep=2pt]
+\item \emph{Diagonal / line solutions} ($r_0 x_0^d = r_2 x_2^d$ or $r_0 x_0^d = r_3 x_3^d$): By Salberger~\cite[Theorem~9.4(a) and Corollary~6.5]{Salberger2023}, all $3d^2$ lines on the smooth diagonal surface $X = V(a_0 x_0^d + a_1 x_1^d + a_2 x_2^d + a_3 x_3^d)$ over $\overline{\Q}$ are cut out by $(a_0 x_0^d + a_1 x_1^d)(a_0 x_0^d + a_2 x_2^d)(a_0 x_0^d + a_3 x_3^d) = 0$; since $r_j > 0$ and $x_j > 0$, the line solutions in $\R_{>0}^4$ are precisely the diagonal pairs $r_0 x_0^d = r_2 x_2^d$ or $r_0 x_0^d = r_3 x_3^d$. Because $m = r x^d$ uniquely determines $(r, x)$, these contribute $O(|\mathcal{N}_i|^2) \ll_{d_0,\eta} X^{2 i_V + 2\eta}$, giving Branch~0 ($i_V - F_i \le 0$).
+\item \emph{Non-line solutions} (none of the pairwise sums vanishes): For each quadruple $\mathbf{r} = (r_0,r_1,r_2,r_3)$, let $g := \gcd(r_0,r_1,r_2,r_3)$ and set $a_j := \pm r_j / g$, so $\gcd(a_0,a_1,a_2,a_3) = 1$. Factor $g = g_{\mathrm{ord}} g_{\mathrm{tail}}$ into
+\[
+  g_{\mathrm{ord}} := \prod_{\substack{p \mid g \\ v_p(g) \le d_0}} p^{v_p(g)} \in [G, 2G),
+  \qquad
+  g_{\mathrm{tail}} := \prod_{\substack{p \mid g \\ v_p(g) \ge d_0 + 1}} p^{v_p(g)}.
+\]
+Since every prime $p \mid g_{\mathrm{tail}}$ satisfies $v_p(r_j) \ge d_0 + 1$ for all $j$, we have $g_{\mathrm{tail}} \mid r_{j,\mathrm{tail}}$ and $\gcd(g_{\mathrm{tail}}, r_{j,\mathrm{ord}}) = 1$, whence $r_{j,\mathrm{ord}}/\gcd(r_{j,\mathrm{ord}}, g_{\mathrm{ord}})$ divides $r_j/g = |a_j|$, giving $H_{\max} := \max_j |a_j| \ge r_{j,\mathrm{ord}}/g_{\mathrm{ord}} \ge X^{S_{\mathrm{ord}}(i,d)}/(2 G)$. Moreover, writing $h_x := \gcd(x_0,x_1,x_2,x_3) \asymp H_x \in [1, 2B]$ reduces $\mathbf{x} = h_x \mathbf{x}'$ to a primitive solution in $[1, B']^4$ with $B' := 2 B / H_x$:
+\begin{enumerate}[label=(\alph*),itemsep=1pt]
+\item \emph{Very large coefficients ($H_{\max} > 3\sqrt{3}(B')^{3d}$):} Consider the matrix $M$ with rows $((x'_0)^d, (x'_1)^d, (x'_2)^d, (x'_3)^d)$ over all primitive solutions $\mathbf{x}' \in [1, B']^4$. Since $\mathbf{a} \in \ker(M)$, $\rank(M) \le 3$. If $\rank(M) = 3$, then $\mathbf{a}$ is proportional to the $3 \times 3$ signed minors of three independent rows of $M$; by Hadamard's inequality every minor has absolute value $\le 3\sqrt{3}(B')^{3d}$, contradicting primitivity of $\mathbf{a}$ and $H_{\max} > 3\sqrt{3}(B')^{3d}$. Hence $\rank(M) \le 2$, so every solution lies on a second linearly independent diagonal surface $\sum b_j (x'_j)^d = 0$. By the proof of Salberger~\cite[Theorem~9.4(b)]{Salberger2023}, the non-line components of the complete intersection have degree $d$ or $d^2$ ($O_d(1)$ components), so~\cite[Theorem~1.17]{Salberger2023} bounds non-line solutions by $O_d((B')^{2/d}\log B' + 1) \ll_d B'$.
+\item \emph{Moderate coefficients ($H_{\max} \le 3\sqrt{3}(B')^{3d}$):} Set $W_{\mathrm{coeff}} := \max(1, (B')^3/H_{\max}^{1/d}) \asymp_d (B')^3/H_{\max}^{1/d}$. Applying Lemma~\ref{lem:brill_gordan} to~\cite[Theorem~3.16]{Salberger2023} with parameter $\varepsilon = \eta / 4$ produces $O_d(W_{\mathrm{coeff}}^{1/(2\sqrt{d})} \log B' + 1)$ geometrically integral curves $D_\lambda \subset X$ of degree $\le 16/\varepsilon = O_{d,\eta}(1)$ capturing all but
+\[
+  O_d\bigl(W_{\mathrm{coeff}}^{1/\sqrt{d}} (\log B')^4\bigr) + O_{d,\eta}\bigl(W_{\mathrm{coeff}}^{1/(2\sqrt{d})} (B')^\eta\bigr)
+  \ll_{d,\eta} X^\eta W_{\mathrm{coeff}}^{1/\sqrt{d}}
+\]
+points (using $W_{\mathrm{coeff}} \ge 1 \implies W_{\mathrm{coeff}}^{1/(2\sqrt{d})} \le W_{\mathrm{coeff}}^{1/\sqrt{d}}$). By Colliot-Th\'el\`ene~\cite{ColliotThelene2002}, $X$ contains $O_d(1)$ curves of degree $\le d - 2$; by Salberger~\cite[Theorem~9.4(b)]{Salberger2023}, every non-line curve on $X$ has degree $\delta \ge \lceil(d+1)/3\rceil \ge 2$ (for $d \ge 4$), so curves of degree $2 \le \delta \le d - 2$ contribute $O_d(B' \log B')$ by~\cite[Theorem~1.17]{Salberger2023}. Curves $D_\lambda$ of degree $d - 1 \le \delta \le 16/\varepsilon$ each contribute $O_{d,\eta}((B')^{2/(d-1)}\log B' + 1)$ by~\cite[Theorem~1.17]{Salberger2023}; multiplying by $O_d(W_{\mathrm{coeff}}^{1/(2\sqrt{d})} \log B' + 1)$ and noting $(B')^{2/(d-1)} \le B'$ ($d \ge 4$) and $W_{\mathrm{coeff}}^{1/(2\sqrt{d})} \le W_{\mathrm{coeff}}^{1/\sqrt{d}}$ yields the total non-line primitive count
+\[
+  N_{\mathrm{prim}}(\mathbf{a}; B') \ll_{d,\eta} X^\eta \left(B' + (B')^{c_1} H_{\max}^{-c_2} + (B')^{c_3} H_{\max}^{-c_4}\right).
+\]
+\end{enumerate}
+Summing over $h_x \in [1, 2B]$ preserves the $B^1$ term (since $\sum_{h_x \le 2B} B/h_x \ll B \log B$) and sums $(B/h_x)^\beta \ll B^\beta$ for every $\beta > 1$ (notice $c_1, c_3 > 1$ for $d \in \{4,5,6\}$).
+
+Finally, sum over all quadruples $\mathbf{r} \in \mathcal{R}_i^4$ with dyadic $g_{\mathrm{ord}} \in [G, 2G)$. Since every prime dividing $r_{j,\mathrm{ord}}$ has multiplicity at most $d_0$, the squarefree kernel $v := \rad(g_{\mathrm{ord}})$ satisfies $g_{\mathrm{ord}} \le v^{d_0}$, hence $v \ge G^{1/d_0}$. For any fixed integer $v \ge 1$, requiring $v \mid \rad(r_j)$ leaves at most $O_{d_0,\eta}(X^{i_V - i_d + \eta} / v)$ choices for each $r_j \in \mathcal{R}_i$ ($j = 0,1,2,3$) by Lemma~\ref{lem:fixed_rad}. Summing over all $v \ge G^{1/d_0}$ yields
+\[
+  \#\bigl\{\mathbf{r} \in \mathcal{R}_i^4 : g_{\mathrm{ord}}(\mathbf{r}) \in [G, 2G)\bigr\}
+  \ll_{d_0,\eta} X^{4(i_V - i_d) + 4\eta} \sum_{v \ge G^{1/d_0}} \frac{1}{v^4}
+  \ll_{d_0,\eta} X^{4(i_V - i_d) + 4\eta} G^{-3/d_0}.
+\]
+Because $3/d_0 \ge 1/2 > 1/8 \ge c_2 > c_4$ (for $d_0 = 6$ and $d \in \{4,5,6\}$), the factor $G^{-3/d_0 + c_2} \le 1$ is maximized at $G = 1$. Summing over $O(\log X)$ dyadic shells of $G$ gives
+\[
+  \|S_i\|_4^4 \ll_{d_0,\eta} X^{2 i_V + 2\eta} + X^{4(i_V - i_d) + 6\eta}\Bigl(X^{i_d} + X^{c_1 i_d - c_2 S_{\mathrm{ord}}(i,d)} + X^{c_3 i_d - c_4 S_{\mathrm{ord}}(i,d)}\Bigr),
+\]
+which via~\eqref{eq:F_empirical} yields the four branches of~\eqref{eq:salb_f_disj}. \qedhere
+\end{itemize}
+\end{proof}
+
+\section{Finite-tree sensitivity reduction, symmetry, and exact verification}\label{sec:reduction}
+
+Fix $d_0 \ge 4$, $0 \le \alpha \le 1$, $0 < \lambda \le 1$, and a tier $\mathsf{T} \in \{\mathrm{elem}, \mathrm{full}\}$. Over the $3d_0 + 13$ nonnegative variables $x = (n_1,\dots,n_{d_0}, n_r, n_V, F_n, W_n)_{n \in \{a,b,c\}}, D$ ($31$ variables for $d_0 = 6$), collect the exact base inequalities~\eqref{eq:cell_vars}--\eqref{eq:pair}, \eqref{eq:fourier_p}, \eqref{eq:l442_lin}, plus the exact shell inequalities $-\sigma_b \le -1, -\sigma_c \le -1$ whenever \texttt{exact\_bc\_shell} is enabled (used for all $\alpha < 1$ under $b_V \le c_V$), and the exact symmetry rows ($b_V \le c_V$ for $\alpha < 1$; $a_V \le b_V \le c_V$ with \texttt{exact\_bc\_shell} disabled for $\alpha = 1$). Let $\mathcal{F}_{\mathsf{T}}$ denote the family of valid $1$-branch cuts (\textsf{Hua}) and $k$-way disjunctions of tier $\mathsf{T}$ (Propositions~\ref{prop:gon}, \ref{prop:coll_p} and Theorems~\ref{thm:stcl}--\ref{thm:cop_elem} for $\mathsf{T} = \mathrm{elem}$, plus Theorems~\ref{thm:cbp1} and~\ref{thm:salb_f} for $\mathsf{T} = \mathrm{full}$).
+
+A \emph{dual/Farkas proof tree} $\mathcal{T}$ for target $U \in \Q$ is a finite rooted tree whose internal nodes apply a valid cut or $k$-way disjunction $(h_1^T x \le r_1) \lor \dots \lor (h_k^T x \le r_k)$ from $\mathcal{F}_{\mathsf{T}}$, appending $h_j^T x \le r_j$ to the $j$-th child, and whose leaves supply a sparse nonnegative rational vector $y \ge 0$ proving either $y^T H \ge e_D^T, y^T h \le U$ (dual leaf) or $y^T H \ge 0, y^T h < 0$ (Farkas leaf) on the leaf's accumulated system $H x \le h$.
+
+\begin{theorem}[Finite-tree sensitivity reduction]\label{thm:reduction}
+Suppose there exists a valid finite dual/Farkas proof tree $\mathcal{T}$ in tier $\mathsf{T}$ certifying $D \le U$ for $(d_0, \alpha, \lambda)$ (with symmetry reduction $b_V \le c_V$ when $\alpha < 1$, or $a_V \le b_V \le c_V$ without shell rows when $\alpha = 1$). Then for every $\eps > 0$,
+\[
+  N^*(\alpha,\lambda;X) \ll_{\mathcal{T},\eps} X^{U + \eps}
+  \qquad\text{and}\qquad
+  N_{\mathrm{rel}}(\alpha,\lambda;X) \ll_{\mathcal{T},\eps} X^{U + \eps}.
+\]
+\end{theorem}
+\begin{proof}
+Because $\mathcal{T}$ is finite, the quantities
+\[
+  M_{\mathcal{T}} := \max_{\text{leaf } \ell \in \mathcal{T}} \|y_\ell\|_1 < \infty,
+  \qquad
+  \gamma_{\mathcal{T}} := \min_{\text{Farkas leaf } \ell \in \mathcal{T}} (-y_\ell^T h_\ell) > 0
+\]
+are well-defined positive constants (taking $\gamma_{\mathcal{T}} = 1$ if $\mathcal{T}$ has no Farkas leaves). Every base row (including symmetry by $S_2$/$S_3$ invariance of the tier rules—note \texttt{exact\_bc\_shell} is invariant under $b \leftrightarrow c$ and disabled under $S_3$) and every cut/disjunction of $\mathcal{F}_{\mathsf{T}}$ holds on every non-empty anatomy cell of $N^*(\alpha,\lambda;X)$ up to an additive RHS perturbation at most $\delta_{\mathrm{err}}(X,\eta) = C_1 \eta + C_2 \eta_0(X) + C_3 \frac{\log K(d_0,\eta)}{\log X}$ (where $C_1, C_2, C_3$ depend only on $d_0$).
+
+Fix $\eps > 0$, choose $\eta > 0$ small enough that $C_1 \eta < \frac{1}{4}\min\bigl(\frac{\eps}{2 M_{\mathcal{T}}},\; \frac{\gamma_{\mathcal{T}}}{M_{\mathcal{T}}}\bigr)$, and take $X \ge X_0(\mathcal{T}, \eps)$ large enough that $\delta_{\mathrm{err}}(X,\eta) < \frac{1}{2}\min\bigl(\frac{\eps}{2 M_{\mathcal{T}}},\; \frac{\gamma_{\mathcal{T}}}{M_{\mathcal{T}}}\bigr)$. For any non-empty cell, let $x \in \R_{\ge 0}^{3d_0+13}$ be its exact cell point (permuted to satisfy $b_V \le c_V$ or $a_V \le b_V \le c_V$). Starting at the root of $\mathcal{T}$, at each internal node $x$ satisfies at least one child branch up to $+\delta_{\mathrm{err}}$; descending greedily leads to some leaf $\ell$ with $H_\ell x \le h_\ell + \delta_{\mathrm{err}} \mathbf{1}$.
+\begin{itemize}[itemsep=1pt]
+\item Leaf $\ell$ cannot be a Farkas leaf, since $0 \le y_\ell^T H_\ell x \le y_\ell^T h_\ell + \|y_\ell\|_1 \delta_{\mathrm{err}} \le -\gamma_{\mathcal{T}} + M_{\mathcal{T}} \delta_{\mathrm{err}} < 0$.
+\item Thus $\ell$ is a dual leaf, yielding $D = e_D^T x \le y_\ell^T H_\ell x \le y_\ell^T h_\ell + \|y_\ell\|_1 \delta_{\mathrm{err}} \le U + \eps/2$.
+\end{itemize}
+Summing over all $O_{d_0}((\log X)^{3d_0+6}) \ll_{d_0,\eps} X^{\eps/2}$ cells proves $N^*(\alpha,\lambda;X) \ll_{\mathcal{T},\eps} X^{U+\eps}$, and Proposition~\ref{prop:dyadic}(ii) transfers the bound to $N_{\mathrm{rel}}(\alpha,\lambda;X)$.
+\end{proof}
+
+\subsection{Zero-float independent verification and empirical integer audits}
+All $23$ certificates in \path{certificates/} ($42$\,MiB total on disk; summarized in Table~\ref{tab:certs}) are generated by our exact-integer Bareiss simplex branch-and-bound engine (\path{src/exact_simplex.py}, \path{src/branch_and_certify.py}, and \path{src/sweep_2d_frontier.py}) and verified with zero floating-point arithmetic (using only \path{fractions.Fraction} and \path{math.isqrt}) by an independent Python~3 standard-library checker (\path{src/verify_certificates.py}) importing zero solver code. Executing
+\[
+  \texttt{python3 src/verify\_certificates.py --all --self-test}
+\]
+verifies all $23$ proof trees ($80{,}967$ branches, $216$ single-block Hua cuts, $109{,}580$ dual leaves, $168$ Farkas leaves, max depth $122$), reconstructs all base and shell rows, checks every $1$-branch Hua cut and $k$-way disjunction branch against strict tier isolation (forbidding \textsf{cbp1} and \textsf{salb\_f} inside \texttt{tier="elem"}, enforcing $h_1 = 1$ in \textsf{modcoll}$_3$, verifying~\eqref{eq:salb_f_params} in integer arithmetic, and enforcing compatibility of \texttt{exact\_bc\_shell} with \texttt{symmetry}), exhaustively checks all $23$ canonical primal witnesses, checks all $23$ exact SHA-256 digests in \path{certificates/MANIFEST.sha256} and all $23$ consolidated entries in \path{results/frontier_summary_v4.json}, and passes $10$ positive controls plus $38/38$ reason-checked adversarial corruption tests in $47.0$\,s wall time ($403.8$\,MiB cgroup peak RAM).
+
+Complementarily, \path{src/audit_cl_and_lq_lemmas.py} ($0.35$\,s, $8.5$\,MiB peak RAM) empirically checks all core analytic lemmas on exact integer inputs: $5{,}672$ CRT root counts, $899$ primitive box lattices, $4{,}914$ sheared parallelograms, $21{,}582$ real $abc$ \textsf{stCL} injections, $120$ \textsf{L442} fourth-moment plus $75$ H\"older$(4,4,2)$ and $150$ exact \textsf{Hua} $L^6$/$L^8$ H\"older checks, $27$ finite-group \textsf{modcoll}$_3$ character-sum and $g_A$-balancing checks, $25$ triangular Coppersmith Minkowski ratios plus $225$ symbolic Jonqui\`eres zero-cancellation and exponent checks, and $6$ exact Brill--Gordan kernel-minor and integer-divisibility checks ($|\det(K_{\mathcal{I}^c})| = |a_0|^{M_{k-d}} \mid \det(E_{\mathcal{I}})$) on concrete diagonal quartic and quintic surfaces.
+
+\begin{table}[ht]
+\centering
+\caption{Summary of all $23$ independently verified exact rational $d_0=6$ proof trees in \texttt{certificates/} (verified in $47.0$\,s, $403.8$\,MiB peak RAM, zero floats, plus $10$ positive controls and $38/38$ adversarial corruptions rejected).}
+\label{tab:certs}
+\scriptsize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lllrrrrrr@{}}
+\toprule
+Certificate file & Tier & $(\alpha,\lambda)$ & Bound $U$ & Branches & Hua & Dual & Farkas & Depth \\
+\midrule
+\texttt{elem\_unres\_alpha1\_lam1.json}       & \texttt{elem} & $(1,1)$       & $9/16$         & $4{,}501$  & $13$  & $6{,}772$  & $0$   & $51$  \\
+\texttt{elem\_imbal\_alpha\_0\_lam1.json}     & \texttt{elem} & $(0,1)$       & $1/2$          & $0$        & $0$   & $1$        & $0$   & $0$   \\
+\texttt{elem\_imbal\_alpha\_1\_3\_lam1.json}  & \texttt{elem} & $(1/3,1)$     & $1/2$          & $266$      & $2$   & $289$      & $2$   & $43$  \\
+\texttt{elem\_imbal\_alpha\_2\_5\_lam1.json}  & \texttt{elem} & $(2/5,1)$     & $1/2$          & $382$      & $7$   & $406$      & $0$   & $33$  \\
+\texttt{elem\_imbal\_alpha\_4\_9\_lam1.json}  & \texttt{elem} & $(4/9,1)$     & $1/2$          & $330$      & $1$   & $370$      & $0$   & $27$  \\
+\texttt{elem\_imbal\_alpha\_15\_32\_lam1.json}& \texttt{elem} & $(15/32,1)$   & $1/2$          & $1{,}170$  & $1$   & $1{,}325$  & $0$   & $27$  \\
+\texttt{elem\_imbal\_alpha\_97\_206\_lam1.json}& \texttt{elem}& $(97/206,1)$  & $1/2$          & $1{,}179$  & $1$   & $1{,}306$  & $0$   & $31$  \\
+\texttt{elem\_imbal\_alpha\_1\_2\_lam1.json}  & \texttt{elem} & $(1/2,1)$     & $263/522$      & $1{,}043$  & $6$   & $1{,}176$  & $0$   & $33$  \\
+\texttt{elem\_imbal\_alpha\_5\_9\_lam1.json}  & \texttt{elem} & $(5/9,1)$     & $23/45$        & $1{,}705$  & $6$   & $1{,}965$  & $8$   & $34$  \\
+\texttt{elem\_imbal\_alpha\_2\_3\_lam1.json}  & \texttt{elem} & $(2/3,1)$     & $34/63$        & $614$      & $30$  & $665$      & $5$   & $19$  \\
+\texttt{elem\_imbal\_alpha\_3\_4\_lam1.json}  & \texttt{elem} & $(3/4,1)$     & $137/251$      & $1{,}318$  & $8$   & $1{,}499$  & $18$  & $22$  \\
+\texttt{elem\_imbal\_alpha\_4\_5\_lam1.json}  & \texttt{elem} & $(4/5,1)$     & $686/1255$     & $3{,}745$  & $7$   & $4{,}513$  & $18$  & $26$  \\
+\texttt{elem\_imbal\_alpha\_9\_10\_lam1.json} & \texttt{elem} & $(9/10,1)$    & $213/380$      & $3{,}079$  & $12$  & $4{,}056$  & $8$   & $26$  \\
+\texttt{elem\_unres\_alpha1\_lam\_1\_2.json}  & \texttt{elem} & $(1,1/2)$     & $1/3$          & $0$        & $0$   & $1$        & $0$   & $0$   \\
+\texttt{elem\_unres\_alpha1\_lam\_3\_5.json}  & \texttt{elem} & $(1,3/5)$     & $2/5$          & $0$        & $0$   & $1$        & $0$   & $0$   \\
+\texttt{elem\_unres\_alpha1\_lam\_7\_10.json} & \texttt{elem} & $(1,7/10)$    & $29/70$        & $6{,}950$  & $0$   & $8{,}731$  & $1$   & $26$  \\
+\texttt{elem\_unres\_alpha1\_lam\_4\_5.json}  & \texttt{elem} & $(1,4/5)$     & $7/15$         & $6{,}936$  & $0$   & $8{,}572$  & $1$   & $29$  \\
+\texttt{elem\_unres\_alpha1\_lam\_9\_10.json} & \texttt{elem} & $(1,9/10)$    & $119/235$      & $11{,}698$ & $12$  & $17{,}184$ & $1$   & $32$  \\
+\texttt{elem\_unres\_alpha1\_lam\_19\_20.json}& \texttt{elem} & $(1,19/20)$   & $19/35$        & $2{,}663$  & $0$   & $3{,}962$  & $1$   & $24$  \\
+\texttt{elem\_imbal\_alpha\_1\_2\_lam\_4\_5.json}& \texttt{elem}& $(1/2,4/5)$ & $1759/4250$    & $2{,}925$  & $36$  & $3{,}267$  & $0$   & $38$  \\
+\texttt{elem\_imbal\_alpha\_1\_2\_lam\_9\_10.json}& \texttt{elem}& $(1/2,9/10)$& $145/306$   & $403$      & $25$  & $489$      & $10$  & $21$  \\
+\midrule
+\texttt{full\_unres\_alpha1\_lam1.json}       & \texttt{full} & $(1,1)$       & $4224/7637$    & $18{,}747$ & $27$  & $27{,}560$ & $0$   & $122$ \\
+\texttt{full\_imbal\_alpha\_9\_10\_lam1.json} & \texttt{full} & $(9/10,1)$    & $84209/152740$ & $11{,}313$ & $22$  & $15{,}470$ & $95$  & $116$ \\
+\midrule
+\textbf{Total ($23$ certificates)}            &               &               &                & $\mathbf{80{,}967}$ & $\mathbf{216}$ & $\mathbf{109{,}580}$ & $\mathbf{168}$ & $\mathbf{122}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Key zero-tail extremizers and the \texorpdfstring{$4224/7637$}{4224/7637} obstruction}\label{sec:barriers}
+
+Because our fixed-cutoff model embeds zero-tail points ($n_r = W_n = 0$) identically into every larger cutoff $d \ge 6$ (keeping the fixed multiplicity-$6$ threshold in $g_{\mathrm{ord}}$ for Theorem~\ref{thm:salb_f}), any exact rational primal witness with zero tail proves that the corresponding bound is the exact optimum of our relaxation for \emph{every} cutoff $d \ge 6$. All three headline bounds have canonical zero-tail primal witnesses supported inside $\{1,2,3,4,5\}$:
+\begin{itemize}[itemsep=2pt]
+\item \emph{Tier~1 unrestricted bound $9/16$ ($\alpha = \lambda = 1$):}
+\[
+  (a_1, a_5) = \Bigl(\frac{1}{16}, \frac{3}{16}\Bigr), \qquad
+  (b_1, b_4) = (c_1, c_4) = \Bigl(\frac{3}{16}, \frac{3}{16}\Bigr),
+\]
+with $a_V = 1/4$, $b_V = c_V = 3/8$, $A = B = C = 3/16$, $\sigma_a = 1$, $\sigma_b = \sigma_c = 15/16$, $D = 9/16$.
+\item \emph{Square-root imbalance threshold $263/522$ ($\alpha = 1/2$, $\lambda = 1$, both tiers):}
+\begin{gather*}
+  (a_1,a_2,a_3,a_5) = \Bigl(\frac{5}{87}, \frac{2}{87}, \frac{2}{261}, \frac{13}{174}\Bigr), \\
+  (b_1,b_3,b_4) = \Bigl(\frac{53}{522}, \frac{1}{6}, \frac{26}{261}\Bigr), \qquad
+  (c_1,c_2,c_3) = \Bigl(\frac{53}{522}, \frac{107}{522}, \frac{85}{522}\Bigr),
+\end{gather*}
+with $\sigma_a = 1/2$, $\sigma_b = \sigma_c = 1$, $a_V = 85/522$, $b_V = 32/87$, $c_V = 245/522$, $D = 263/522$.
+\item \emph{Tier~2 unrestricted headline bound $4224/7637$ ($\alpha = \lambda = 1$):}
+\begin{equation}\label{eq:obstruction_eq}
+  a_1 a_5^5 + b_1 b_4^4 = c_1 c_3^3 c_4^4 \le X,
+\end{equation}
+with exact coordinates
+\[
+  (a_1, a_5) = \Bigl(\frac{597}{7637}, \frac{1408}{7637}\Bigr), \quad
+  (b_1, b_4) = \Bigl(\frac{1408}{7637}, \frac{1408}{7637}\Bigr), \quad
+  (c_1, c_3, c_4) = \Bigl(\frac{317}{2182}, \frac{597}{15274}, \frac{1408}{7637}\Bigr),
+\]
+giving $a_V = 2005/7637$, $b_V = c_V = 2816/7637$, $\sigma_a = \sigma_c = 1$, $\sigma_b = 7040/7637$, $B = C = 1408/7637$, and $A = 1791/7637$ (boosted above $a_5 = 1408/7637$ precisely by Theorem~\ref{thm:salb_f} Branch~2 at $d=5$ with $(c_1,c_2) = (161/120, 4/45)$).
+\end{itemize}
+
+Why does breaking $4224/7637$ resist every pointwise determinant-method bound? On letter $b = b_1 b_4^4$, we have $b_1 = b_4 = 1408/7637$ ($R = B$), so Theorem~\ref{thm:salb_f} at $d = 4$ saturates its Branch~1 floor $3 b_4 - b_V = b_4 = B$. Indeed, $\|S_b\|_4^4$ counts solutions to the bilinear quartic equation
+\begin{equation}\label{eq:bilinear_quartic}
+  r_0 x_0^4 + r_1 x_1^4 = r_2 x_2^4 + r_3 x_3^4 \qquad (r_j \asymp R,\; x_j \asymp B).
+\end{equation}
+For any fixed coefficient quadruple $\mathbf{r} = (r_0,r_1,r_2,r_3)$ satisfying $r_0 + r_1 = r_2 + r_3$, the $B$ non-diagonal scalar-multiple solutions $(x_0,x_1,x_2,x_3) = (h_x, h_x, h_x, h_x)$ ($1 \le h_x \le B$) show that the pointwise worst-case non-line count $\max_{\mathbf{r}} N_{\mathrm{nondiag}}(\mathbf{r}; B)$ is genuinely $\gg B$. Consequently, \emph{no} pointwise surface bound of the form $|\mathcal{R}_b|^4 \max_{\mathbf{r}} N_{\mathrm{nondiag}}(\mathbf{r}; B)$ can ever beat the Branch-1 floor $R^4 B$ in Theorem~\ref{thm:salb_f}.
+
+By contrast, when averaged over $\mathbf{r} \in [1, R]^4$, the hyperplane $r_0 + r_1 = r_2 + r_3$ contains only $O(R^3)$ quadruples (giving $R^3 B \ll R^4$ for $R \asymp B$), and more generally primitive points $\mathbf{x}'$ of height $U \le B$ contribute $\sum_{U} U^4 (1 + R^3/U^4)(B/U) \ll R^3 B + B U^3$, suggesting that the \emph{averaged} bilinear fourth moment satisfies $I_4^{(4)}(R, B) \ll_\eps (R^2 B^2 + R^4 B^{1-\delta}) (RB)^\eps$ for some $\delta > 0$. Breaking $4224/7637$ globally therefore points cleanly to two concrete research directions: proving an averaged power saving below $R^4 B$ for the bilinear quartic fourth moment~\eqref{eq:bilinear_quartic} (exploiting the dual hyperplane restriction on $\mathbf{r}$), or introducing a genuinely new three-letter arithmetic input targeting~\eqref{eq:obstruction_eq}.
+
+\section*{Data and code availability}
+All solver scripts, the standalone zero-floating-point standard-library verifier, the empirical integer audit, and all $23$ exact rational certificate files with SHA-256 digests are publicly archived at \url{https://github.com/batchatco/abc-exceptional-frontier}.
+
+\bibliographystyle{amsplain}
+\bibliography{main}
+
+\end{document}
