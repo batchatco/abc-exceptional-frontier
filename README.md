@@ -1,8 +1,11 @@
 # `abc-exceptional-frontier`
 
 [![Verify Certificates](https://github.com/batchatco/abc-exceptional-frontier/actions/workflows/verify.yml/badge.svg)](https://github.com/batchatco/abc-exceptional-frontier/actions/workflows/verify.yml)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24449077.svg)](https://doi.org/10.5281/zenodo.24449077)
 
 Unconditional **two-tier** improvements on the exceptional set $N_\lambda(X)$ and imbalanced exceptional set $N_{\mathrm{rel}}(\alpha,\lambda;X)$ in the $abc$ conjecture, reaching $9/16$ purely elementarily and $4224/7637 \approx 0.55310$ via curve lifting and large-coefficient diagonal surfaces uniformly through $\lambda = 1$, certified directly at fixed cutoff $d_0 = 6$ by 23 exact rational dual/Farkas proof trees with zero floating-point arithmetic.
+
+**Preprint (Zenodo):** Bradley Arthur Taylor, *A Two-Tier Frontier for the Exceptional Set in the $abc$ Conjecture via Curve Lifting and Large-Coefficient Diagonal Surfaces* (November 22, 2026), [DOI: 10.5281/zenodo.24449077](https://doi.org/10.5281/zenodo.24449077) ([local PDF](paper/main.pdf)).
 
 ## Overview
 
