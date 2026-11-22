@@ -1,5 +1,7 @@
 # `abc-exceptional-frontier`
 
+[![Verify Certificates](https://github.com/batchatco/abc-exceptional-frontier/actions/workflows/verify.yml/badge.svg)](https://github.com/batchatco/abc-exceptional-frontier/actions/workflows/verify.yml)
+
 Unconditional **two-tier** improvements on the exceptional set $N_\lambda(X)$ and imbalanced exceptional set $N_{\mathrm{rel}}(\alpha,\lambda;X)$ in the $abc$ conjecture, reaching $9/16$ purely elementarily and $4224/7637 \approx 0.55310$ via curve lifting and large-coefficient diagonal surfaces uniformly through $\lambda = 1$, certified directly at fixed cutoff $d_0 = 6$ by 23 exact rational dual/Farkas proof trees with zero floating-point arithmetic.
 
 ## Overview
@@ -75,6 +77,7 @@ Every point in Table 3 is proved completely elementarily (Tier 1) and simultaneo
 
 ```text
 abc-exceptional-frontier/
+├── .github/workflows/verify.yml   # GitHub Actions CI (stdlib zero-float verification + audits)
 ├── LICENSE                        # MIT License
 ├── README.md
 ├── certificates/                  # 23 exact rational v4 certificates (21 Tier 1 + 2 Tier 2, 42 MiB) + MANIFEST.sha256

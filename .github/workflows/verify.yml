@@ -1,0 +1,24 @@
+name: Verify Certificates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Verify all 23 exact rational certificates and self-tests (zero floats, stdlib only)
+        run: python3 src/verify_certificates.py --all --self-test
+
+      - name: Run empirical exact-integer lemma audits
+        run: python3 src/audit_cl_and_lq_lemmas.py
