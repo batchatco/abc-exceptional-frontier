@@ -118,3 +118,8 @@ python3 src/sweep_2d_frontier.py elemA elemB elemC1 elemC2 fullA fullB manifest
 make -C paper pdf
 make -C paper clean
 ```
+
+## AI-Assistance Disclosure
+
+Large-language-model AI coding and mathematical research assistants were used extensively during this project to explore disjunction families, implement the solver and independent verifier, audit proof steps, and draft the manuscript. Every quantitative bound is backed by an exact rational proof tree verified with zero floating-point arithmetic by the standalone Python 3 standard-library checker (`src/verify_certificates.py`), and all external theorem citations were checked against primary sources.
+

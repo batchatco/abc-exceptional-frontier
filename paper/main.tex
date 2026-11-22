@@ -6,7 +6,13 @@
 \usepackage{array}
 \usepackage{enumitem}
 \usepackage{microtype}
+\usepackage{etoolbox}
 \usepackage[hidelinks]{hyperref}
+
+\makeatletter
+\patchcmd{\@maketitle}{\@setauthors}{\@setauthors\par\vspace{4pt}{\centering\small\@date\par}}{}{}
+\patchcmd{\@adminfootnotes}{\ifx\@empty\@date\else \@footnotetext{\@setdate}\fi}{}{}{}
+\makeatother
 
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}[section]
@@ -35,7 +41,7 @@
 \title[A Two-Tier Frontier for the $abc$ Exceptional Set]{A Two-Tier Frontier for the Exceptional Set in the $abc$ Conjecture via Curve Lifting and Large-Coefficient Diagonal Surfaces}
 
 \author{Bradley Arthur Taylor}
-\date{November 2026}
+\date{November 22, 2026}
 
 \begin{document}
 
@@ -837,6 +843,9 @@ Why does breaking $4224/7637$ resist every pointwise determinant-method bound? O
 For any fixed coefficient quadruple $\mathbf{r} = (r_0,r_1,r_2,r_3)$ satisfying $r_0 + r_1 = r_2 + r_3$, the $B$ non-diagonal scalar-multiple solutions $(x_0,x_1,x_2,x_3) = (h_x, h_x, h_x, h_x)$ ($1 \le h_x \le B$) show that the pointwise worst-case non-line count $\max_{\mathbf{r}} N_{\mathrm{nondiag}}(\mathbf{r}; B)$ is genuinely $\gg B$. Consequently, \emph{no} pointwise surface bound of the form $|\mathcal{R}_b|^4 \max_{\mathbf{r}} N_{\mathrm{nondiag}}(\mathbf{r}; B)$ can ever beat the Branch-1 floor $R^4 B$ in Theorem~\ref{thm:salb_f}.
 
 By contrast, when averaged over $\mathbf{r} \in [1, R]^4$, the hyperplane $r_0 + r_1 = r_2 + r_3$ contains only $O(R^3)$ quadruples (giving $R^3 B \ll R^4$ for $R \asymp B$), and more generally primitive points $\mathbf{x}'$ of height $U \le B$ contribute $\sum_{U} U^4 (1 + R^3/U^4)(B/U) \ll R^3 B + B U^3$, suggesting that the \emph{averaged} bilinear fourth moment satisfies $I_4^{(4)}(R, B) \ll_\eps (R^2 B^2 + R^4 B^{1-\delta}) (RB)^\eps$ for some $\delta > 0$. Breaking $4224/7637$ globally therefore points cleanly to two concrete research directions: proving an averaged power saving below $R^4 B$ for the bilinear quartic fourth moment~\eqref{eq:bilinear_quartic} (exploiting the dual hyperplane restriction on $\mathbf{r}$), or introducing a genuinely new three-letter arithmetic input targeting~\eqref{eq:obstruction_eq}.
+
+\section*{AI-assistance disclosure}
+Large-language-model AI coding and mathematical research assistants were used extensively in this work to explore disjunction families, implement the exact-integer branch-and-bound solver and independent verifier, audit proof steps, and draft and edit the manuscript. Every quantitative bound claimed in this paper is backed by an exact rational dual/Farkas proof tree verified with zero floating-point arithmetic by the standalone Python~3 standard-library checker (\path{src/verify_certificates.py}), all external theorem citations were verified against primary sources, and the author takes full responsibility for the mathematical correctness of the paper.
 
 \section*{Data and code availability}
 All solver scripts, the standalone zero-floating-point standard-library verifier, the empirical integer audit, and all $23$ exact rational certificate files with SHA-256 digests are publicly archived at \url{https://github.com/batchatco/abc-exceptional-frontier}.
