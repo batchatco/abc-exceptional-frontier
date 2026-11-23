@@ -1304,7 +1304,7 @@ def run_corruption_self_test(
     elem_branch_cert: Dict[str, Any],
     full_branch_cert: Optional[Dict[str, Any]] = None,
 ) -> int:
-    """Verify positive controls and 34 reason-checked adversarial corruptions."""
+    """Verify positive controls and 38 reason-checked adversarial corruptions."""
     require("dual" in elem_leaf_cert["tree"], "elem_leaf_cert fixture must be a single dual leaf")
     require("children" in elem_branch_cert["tree"], "elem_branch_cert fixture must branch")
     require(elem_leaf_cert["config"]["tier"] == "elem", "elem_leaf_cert must be tier='elem'")

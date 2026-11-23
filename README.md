@@ -88,7 +88,7 @@ abc-exceptional-frontier/
 │   ├── Makefile                   # Containerized TeX Live build (podman)
 │   ├── main.bib                   # Primary-source verified bibliography
 │   ├── main.tex                   # Standalone LaTeX manuscript (two-tier v4)
-│   └── main.pdf                   # Compiled PDF (18 pages, 0 warnings / 0 overfull boxes)
+│   └── main.pdf                   # Compiled PDF (19 pages, 0 warnings / 0 overfull boxes)
 ├── results/
 │   ├── frontier_summary_v4.json   # Consolidated exact summary of all 23 certificates
 │   └── summary_v4_*.json          # Per-batch solver outputs (elemA, elemB, elemC1, elemC2, fullA, fullB)
